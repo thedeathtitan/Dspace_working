@@ -10,41 +10,43 @@ npm run dev
 ```
 
 ### Key Dependencies Installed
-- `@xyflow/react`: React Flow v12 for node graphs
-- `dagre`: Auto-layout algorithm  
-- `zustand`: Lightweight state management
-- `axios`: HTTP client
-- `clsx`: Conditional CSS classes
-- `tailwindcss`: Utility-first CSS
+- `cytoscape`: Cytoscape.js v3.32 for network graphs
+- `react-cytoscapejs`: React wrapper for Cytoscape
+- `dagre`: Auto-layout algorithm for hierarchical layouts
+- `zustand`: Lightweight state management (v5.0.5)
+- `axios`: HTTP client for API communication
+- `clsx`: Conditional CSS class utility
+- `tailwindcss`: Utility-first CSS framework (v4.1.10)
 
 ## Development Workflow
 
 ### 1. Component Development Order
 1. Set up Zustand store (`src/store/diagStore.ts`)
-2. Create basic NoteInput component
-3. Set up GraphBoard with React Flow
-4. Build custom node components
-5. Integrate backend API
+2. Create NoteInput component for clinical notes
+3. Set up GraphBoard with Cytoscape.js
+4. Build interactive node expansion system
+5. Integrate OpenAI API directly in frontend
 
-### 2. Backend Development
-Create separate `backend/` directory with:
-- FastAPI server (`main.py`)
-- OpenAI integration with function calling
-- JSON schema validation
-- CORS setup for frontend connection
+### 2. Frontend-Only Architecture
+This application uses a frontend-only architecture:
+- OpenAI API integration directly in browser
+- No backend server required
+- Secure API key storage in localStorage
+- All processing happens client-side
 
 ### 3. Testing Strategy
-- Unit tests for components with Vitest
-- API mocking with Mock Service Worker
-- Snapshot tests for React Flow graphs
+- Manual testing with real clinical scenarios
+- Cross-browser compatibility testing
+- Responsive design testing across devices
+- API integration testing with OpenAI
 
 ## Key Implementation Details
 
-### React Flow Setup
-- Custom node types: `diagnosis`, `differential`, `action`
-- Auto-layout with dagre on graph updates
-- Minimap and controls for navigation
-- Background grid for visual reference
+### Cytoscape.js Setup
+- Node types: `diagnosis`, `differential`, `action`
+- Interactive layout with manual positioning
+- Click-to-expand node details
+- Pan, zoom, and fit-to-view controls
 
 ### State Management
 - Single Zustand store for simplicity
@@ -52,41 +54,53 @@ Create separate `backend/` directory with:
 - Loading states for API calls
 
 ### Styling Approach
-- Tailwind utility classes for rapid development
-- Custom CSS for React Flow node styling
-- Color-coded node types for quick visual parsing
+- Tailwind utility classes for consistent design
+- CSS-in-JS styling for Cytoscape nodes
+- Color-coded priority system for clinical urgency
+- Responsive design patterns throughout
 
 ## Common Patterns
 
-### Node Component Structure
+### Cytoscape Node Structure
 ```typescript
-interface NodeProps {
+interface CytoscapeNode {
   data: {
+    id: string;
     label: string;
     type: 'diagnosis' | 'differential' | 'action';
+    priority: 'urgent' | 'high' | 'medium' | 'low';
     details?: string;
-    completed?: boolean;
+    confidence?: number;
   };
 }
 
-export function DiagnosisNode({ data }: NodeProps) {
-  return (
-    <div className="bg-blue-500 text-white rounded p-2">
-      {data.label}
-    </div>
-  );
-}
+// Node styling based on type and priority
+const nodeStyles = {
+  'node[type="diagnosis"]': {
+    'background-color': '#3b82f6',
+    'color': '#ffffff'
+  }
+};
 ```
 
 ### API Integration Pattern
 ```typescript
-const analyzeNote = async (note: string) => {
+const analyzeNote = async (note: string, apiKey: string) => {
   setLoading(true);
   try {
-    const response = await axios.post('/api/analyze', { note });
-    setGraph(response.data);
+    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: note }],
+      functions: [medicalAnalysisSchema]
+    }, {
+      headers: { 
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    setGraph(processOpenAIResponse(response.data));
   } catch (error) {
-    // Handle error
+    // Handle API errors
   } finally {
     setLoading(false);
   }
@@ -96,24 +110,24 @@ const analyzeNote = async (note: string) => {
 ## Troubleshooting
 
 ### Common Issues
-1. **React Flow not rendering**: Check container has defined height/width
-2. **Dagre layout issues**: Ensure nodes have position before layout
+1. **Cytoscape not rendering**: Ensure container has defined height/width
+2. **Layout positioning problems**: Check node data format and IDs
 3. **State not updating**: Verify Zustand store subscriptions
-4. **CORS errors**: Configure backend CORS settings
+4. **API key errors**: Check localStorage and OpenAI API key validity
 
 ### Performance Tips
-- Use React.memo for node components
-- Debounce API calls during typing
-- Implement virtual scrolling for large graphs
-- Optimize re-renders with proper key props
+- Use React.memo for frequently re-rendering components
+- Debounce API calls to avoid excessive requests
+- Optimize Cytoscape graph updates with batch operations
+- Implement proper cleanup for event listeners
 
 ## Architecture Decisions
 
-### Why React Flow?
-- Purpose-built for node/edge graphs
-- Excellent TypeScript support
-- Built-in zoom, pan, minimap features
-- Extensible with custom nodes/edges
+### Why Cytoscape.js?
+- Mature, battle-tested graph visualization library
+- Excellent performance with large datasets
+- Flexible styling and layout options
+- Strong community and documentation
 
 ### Why Zustand over Redux?
 - Minimal boilerplate
@@ -121,30 +135,30 @@ const analyzeNote = async (note: string) => {
 - TypeScript-friendly
 - Smaller bundle size
 
-### Why Dagre for Layout?
-- Hierarchical layout perfect for diagnosis workflows
-- Automatic edge routing
-- Configurable spacing and direction
-- Works well with React Flow
+### Why Frontend-Only Architecture?
+- Simplified deployment and hosting
+- Better privacy (no data sent to backend)
+- Direct OpenAI API integration
+- Easier maintenance and updates
 
 ## API Design Notes
 
-### Backend Endpoint Structure
-```
-POST /api/analyze
-Body: { "note": "patient presents with..." }
-Response: {
-  "nodes": [...],
-  "edges": [...],
-  "metadata": { "processing_time": 1.2, "confidence": 0.85 }
-}
+### OpenAI Integration
+```typescript
+// Direct API calls to OpenAI
+const openaiRequest = {
+  model: 'gpt-4',
+  messages: [...],
+  functions: [medicalAnalysisSchema],
+  temperature: 0.1
+};
 ```
 
 ### Error Handling
-- 422: Invalid input format
-- 429: Rate limit exceeded  
-- 500: OpenAI API errors
-- Graceful degradation for network issues
+- 401: Invalid API key
+- 429: Rate limit exceeded
+- 500: OpenAI service errors
+- Network errors with retry logic
 
 ## Future Enhancements
 
@@ -161,7 +175,8 @@ Response: {
 - Audit logging for compliance
 
 ## Useful Resources
-- [React Flow Documentation](https://reactflow.dev/)
+- [Cytoscape.js Documentation](https://js.cytoscape.org/)
+- [React Cytoscape.js](https://github.com/plotly/react-cytoscapejs)
 - [Zustand Guide](https://github.com/pmndrs/zustand)
-- [Dagre Layout Algorithm](https://github.com/dagrejs/dagre)
-- [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling)
+- [OpenAI API Documentation](https://platform.openai.com/docs/api-reference)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)

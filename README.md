@@ -2,32 +2,32 @@
 
 ## Clinical Reasoning Intelligence Platform
 
-A cutting-edge web application that combines OpenAI's O3 reasoning model with interactive visualization to create comprehensive medical diagnosis workflows. Built with Claude's signature design language for a professional healthcare experience.
+A sophisticated web application that integrates OpenAI's advanced reasoning capabilities with interactive network visualization to create comprehensive medical diagnostic workflows. Features a clean, professional interface designed for healthcare environments.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![React](https://img.shields.io/badge/React-18.0-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
-![OpenAI](https://img.shields.io/badge/OpenAI-O3-green.svg)
+![React](https://img.shields.io/badge/React-19.1-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
 ## 🚀 Features
 
 ### 🧠 AI-Powered Clinical Analysis
-- **OpenAI O3 Integration**: Advanced reasoning model for comprehensive medical analysis
-- **Emergency Medicine Expertise**: Prompts designed from emergency department perspective
-- **Evidence-Based Reasoning**: Supporting clinical findings for each diagnosis
-- **Confidence Scoring**: Quantified certainty levels for medical decisions
+- **OpenAI Integration**: Advanced language models for comprehensive medical analysis
+- **Emergency Medicine Focus**: Prompts optimized for emergency department workflows
+- **Evidence-Based Reasoning**: Supporting clinical findings for each diagnostic suggestion
+- **Confidence Scoring**: Quantified certainty levels for medical decision support
 
-### 🎨 Claude-Inspired Interface
-- **Authentic Design**: Matches Claude's clean, professional aesthetic
-- **Medical-Grade UI**: Optimized for healthcare workflows
-- **Responsive Layout**: Works seamlessly across devices
-- **Accessibility**: WCAG compliant design principles
+### 🎨 Professional Healthcare Interface
+- **Clean Design**: Modern, professional aesthetic optimized for medical environments
+- **Medical-Grade UI**: Interface components designed for healthcare workflows
+- **Responsive Layout**: Seamless experience across desktop, tablet, and mobile devices
+- **Accessibility**: WCAG-compliant design with keyboard navigation support
 
-### 📊 Interactive Workflow Visualization
-- **Clustered Nodes**: Related diagnoses and actions grouped intelligently
-- **Expandable Details**: Click any node to reveal comprehensive information
-- **Priority Color Coding**: Visual hierarchy for clinical urgency
-- **Real-time Interaction**: Pan, zoom, and explore medical reasoning
+### 📊 Interactive Network Visualization
+- **Node-Based Workflow**: Medical concepts represented as interactive network nodes
+- **Expandable Details**: Click nodes to reveal comprehensive diagnostic information
+- **Color-Coded Priority**: Visual hierarchy indicating clinical urgency levels
+- **Dynamic Layout**: Automatic positioning with manual adjustment capabilities
 
 ### 🔒 Privacy & Security
 - **Local Processing**: API keys stored securely in browser only
@@ -36,12 +36,12 @@ A cutting-edge web application that combines OpenAI's O3 reasoning model with in
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS with Claude's design system
-- **Visualization**: Cytoscape.js for interactive diagrams
-- **State Management**: Zustand with persistence
-- **AI Integration**: OpenAI O3 API with function calling
-- **Build Tools**: Vite + ESLint + PostCSS
+- **Frontend**: React 19.1 + TypeScript 5.8 + Vite 6.3
+- **Styling**: Tailwind CSS 4.1 with custom design system
+- **Visualization**: Cytoscape.js 3.32 for interactive network diagrams
+- **State Management**: Zustand 5.0 with localStorage persistence
+- **AI Integration**: OpenAI API with structured JSON responses
+- **Build Tools**: Vite + ESLint 9 + PostCSS + Autoprefixer
 
 ## 📋 Prerequisites
 
@@ -54,7 +54,7 @@ A cutting-edge web application that combines OpenAI's O3 reasoning model with in
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd diagnosis-space-claude-version
+cd diagnosis-space
 ```
 
 ### 2. Install Dependencies
@@ -106,27 +106,25 @@ Physical Examination:
 src/
 ├── components/           # React components
 │   ├── ApiKeyInput.tsx   # Secure API key management
-│   ├── GraphBoard.tsx    # Cytoscape visualization
-│   ├── Legend.tsx        # Workflow guide
-│   ├── NoteInput.tsx     # Clinical note input
-│   └── nodes/
-│       └── DiagnosisNode.tsx  # Custom medical nodes
+│   ├── GraphBoard.tsx    # Cytoscape visualization component
+│   ├── Legend.tsx        # Interface legend and controls
+│   └── NoteInput.tsx     # Clinical note input form
 ├── store/               # State management
-│   └── diagStore.ts     # Zustand store with persistence
+│   └── diagStore.ts     # Zustand store with localStorage persistence
 ├── types/               # TypeScript definitions
-│   └── index.ts         # Medical data types
+│   └── index.ts         # Medical data types and interfaces
 ├── utils/               # Utility functions
-│   ├── openai.ts        # AI integration
-│   └── layout.ts        # Node positioning
-└── App.tsx              # Main application
+│   ├── openai.ts        # OpenAI API integration
+│   └── layout.ts        # Graph layout algorithms
+└── App.tsx              # Main application component
 ```
 
 ### Data Flow
-1. **User Input** → Clinical note entered
-2. **AI Processing** → OpenAI O3 analyzes content
-3. **Data Transformation** → Structured medical workflow
-4. **Visualization** → Interactive Cytoscape diagram
-5. **User Interaction** → Explore and analyze results
+1. **User Input** → Clinical note entered via NoteInput component
+2. **AI Processing** → OpenAI API analyzes clinical content
+3. **Data Transformation** → Structured JSON converted to graph nodes
+4. **Visualization** → Interactive Cytoscape network diagram
+5. **User Interaction** → Click, expand, and explore diagnostic workflow
 
 ## 🔧 Development
 
