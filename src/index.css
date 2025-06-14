@@ -1,8 +1,6 @@
-/* Cytoscape styles imported via JS */
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Cytoscape styles imported via JS */
 
 /* Custom animations and enhancements */
 @keyframes fadeIn {

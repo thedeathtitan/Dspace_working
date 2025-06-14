@@ -50,6 +50,8 @@ export function GraphBoard() {
   ];
 
   useEffect(() => {
+    console.log('GraphBoard: graph updated', { nodeCount: graph.nodes.length, edgeCount: graph.edges.length });
+    
     const nodes = (graph.nodes.length > 0 ? graph.nodes : testNodes).map((n) => ({
       data: {
         id: n.id,
@@ -57,6 +59,7 @@ export function GraphBoard() {
       },
       position: n.position,
       selectable: true,
+      grabbable: true,
       classes: n.data.type
     }));
 
@@ -69,68 +72,146 @@ export function GraphBoard() {
       }
     }));
 
+    console.log('GraphBoard: setting elements', { nodes: nodes.length, edges: edges.length });
     setElements([...nodes, ...edges]);
   }, [graph]);
 
-  const stylesheet: Array<import('cytoscape').Stylesheet> = [
+  const stylesheet = [
     {
       selector: 'node',
       style: {
         label: 'data(label)',
         'text-wrap': 'wrap',
-        'text-max-width': 140,
-        'background-color': '#f3f4f6',
-        'border-width': 3,
-        'border-color': '#94a3b8',
-        'font-size': 10
+        'text-max-width': 200,
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'background-color': '#ffffff',
+        'border-width': 4,
+        'border-color': '#e5e7eb',
+        'font-size': 12,
+        'font-weight': 'bold',
+        'color': '#374151',
+        'shape': 'round-rectangle',
+        'width': 180,
+        'height': 80,
+        'padding': 10,
+        'box-shadow': '0 4px 12px rgba(0,0,0,0.15)',
+        'transition-property': 'background-color, border-color, box-shadow',
+        'transition-duration': '0.2s'
+      }
+    },
+    {
+      selector: 'node:hover',
+      style: {
+        'box-shadow': '0 8px 25px rgba(0,0,0,0.25)',
+        'border-width': 5
       }
     },
     {
       selector: 'node.diagnosis',
       style: {
-        'background-color': '#ffedd5',
-        'border-color': '#fb923c'
+        'background-color': '#fee2e2',
+        'border-color': '#dc2626',
+        'color': '#991b1b'
       }
     },
     {
       selector: 'node.differential',
       style: {
         'background-color': '#dbeafe',
-        'border-color': '#60a5fa'
+        'border-color': '#2563eb',
+        'color': '#1e40af'
       }
     },
     {
       selector: 'node.action',
       style: {
-        'background-color': '#fef9c3',
-        'border-color': '#facc15'
+        'background-color': '#fef3c7',
+        'border-color': '#f59e0b',
+        'color': '#92400e'
       }
     },
     {
       selector: 'node.completed',
       style: {
-        'background-color': '#e5e7eb',
-        'border-color': '#9ca3af'
+        'background-color': '#d1fae5',
+        'border-color': '#10b981',
+        'color': '#059669',
+        'text-decoration': 'line-through'
+      }
+    },
+    {
+      selector: 'node.diagnostic',
+      style: {
+        'background-color': '#f3e8ff',
+        'border-color': '#8b5cf6',
+        'color': '#6d28d9'
+      }
+    },
+    {
+      selector: 'node.therapeutic',
+      style: {
+        'background-color': '#ecfdf5',
+        'border-color': '#10b981',
+        'color': '#047857'
+      }
+    },
+    {
+      selector: 'node.monitoring',
+      style: {
+        'background-color': '#fff7ed',
+        'border-color': '#ea580c',
+        'color': '#c2410c'
+      }
+    },
+    {
+      selector: 'node.consultation',
+      style: {
+        'background-color': '#fdf2f8',
+        'border-color': '#ec4899',
+        'color': '#be185d'
       }
     },
     {
       selector: 'edge',
       style: {
-        width: 2,
-        'line-color': '#94a3b8',
-        'target-arrow-color': '#94a3b8',
+        width: 3,
+        'line-color': '#6b7280',
+        'target-arrow-color': '#6b7280',
         'target-arrow-shape': 'triangle',
+        'arrow-scale': 1.5,
         label: 'data(label)',
-        'font-size': 8,
-        'curve-style': 'bezier'
+        'font-size': 10,
+        'font-weight': 'bold',
+        'text-background-color': '#ffffff',
+        'text-background-opacity': 0.8,
+        'text-background-padding': 3,
+        'curve-style': 'bezier',
+        'control-point-step-size': 40
+      }
+    },
+    {
+      selector: 'edge:hover',
+      style: {
+        width: 4,
+        'line-color': '#374151',
+        'target-arrow-color': '#374151'
       }
     }
   ];
 
-  const layout = { name: 'preset', fit: true, padding: 30 };
+  const layout = { 
+    name: graph.nodes.length > 0 ? 'preset' : 'cose',
+    fit: true, 
+    padding: 50,
+    nodeRepulsion: 8000,
+    idealEdgeLength: 200,
+    animate: true,
+    animationDuration: 500
+  };
 
   const handleCy = (cy: Core) => {
-    cy.on('tap', 'node', (evt) => {
+    cy.on('tap', 'node', (evt: cytoscape.EventObject) => {
       const d = evt.target.data() as SelectedInfo;
       setSelected(d);
     });
