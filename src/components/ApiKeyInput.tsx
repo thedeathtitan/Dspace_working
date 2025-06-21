@@ -3,9 +3,10 @@ import { useState } from 'react';
 interface ApiKeyInputProps {
   onApiKeySet: (apiKey: string) => void;
   hasApiKey: boolean;
+  compact?: boolean;
 }
 
-export function ApiKeyInput({ onApiKeySet, hasApiKey }: ApiKeyInputProps) {
+export function ApiKeyInput({ onApiKeySet, hasApiKey, compact = false }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState('');
   const [isVisible, setIsVisible] = useState(false);
 
@@ -23,6 +24,22 @@ export function ApiKeyInput({ onApiKeySet, hasApiKey }: ApiKeyInputProps) {
   };
 
   if (hasApiKey) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-2 px-3 py-2 bg-surface rounded-xl shadow-subtle" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="w-2 h-2 bg-differential rounded-full"></div>
+          <span className="text-caption text-text-primary font-medium">API Connected</span>
+          <button
+            onClick={handleClear}
+            className="ml-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+            title="Change API Key"
+          >
+            🔄
+          </button>
+        </div>
+      );
+    }
+    
     return (
       <div className="bg-surface rounded-2xl p-6 shadow-elevation" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
         <div className="flex items-center justify-between">
@@ -41,6 +58,39 @@ export function ApiKeyInput({ onApiKeySet, hasApiKey }: ApiKeyInputProps) {
             🔄 Change Key
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="min-w-max">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type={isVisible ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="API Key (sk-...)"
+              className="w-32 px-2 py-2 text-caption bg-surface border border-separator focus:border-accent focus:outline-none rounded-lg transition-apple duration-apple"
+            />
+            <button
+              type="button"
+              onClick={() => setIsVisible(!isVisible)}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {isVisible ? '👁️' : '🙈'}
+            </button>
+          </div>
+          <button
+            type="submit"
+            disabled={!apiKey.trim()}
+            className="px-2 py-2 text-caption bg-action text-white rounded-lg hover:bg-action/90 disabled:bg-text-secondary/50 disabled:cursor-not-allowed font-medium transition-all duration-300"
+            title="Connect API Key"
+          >
+            🚀
+          </button>
+        </form>
       </div>
     );
   }

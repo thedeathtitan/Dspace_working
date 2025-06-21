@@ -52,10 +52,15 @@ export interface DiagnosisState {
   isLoading: boolean;
   error: string | null;
   apiKey: string;
+  isRecording: boolean;
+  isTranscribing: boolean;
   setNote: (note: string) => void;
   setGraph: (graph: { nodes: DiagnosisNode[]; edges: DiagnosisEdge[] }) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setApiKey: (apiKey: string) => void;
+  setRecording: (recording: boolean) => void;
+  setTranscribing: (transcribing: boolean) => void;
   analyzeNote: (note: string) => Promise<void>;
+  transcribeAudio: (audioBlob: Blob) => Promise<string>;
 }

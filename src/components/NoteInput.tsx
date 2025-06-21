@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDiagStore } from '../store/diagStore';
 import { ApiKeyInput } from './ApiKeyInput';
+import { VoiceRecorder } from './VoiceRecorder';
 
 export function NoteInput() {
   const { note, setNote, analyzeNote, isLoading, error, apiKey, setApiKey } = useDiagStore();
@@ -27,17 +28,15 @@ Physical Examination:
     setNote(sampleNote);
   };
 
+  const handleVoiceTranscription = (transcription: string) => {
+    const newNote = localNote ? `${localNote}\n\n${transcription}` : transcription;
+    setLocalNote(newNote);
+    setNote(newNote);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* API Key Input */}
-      <div className="bg-surface rounded-2xl p-6 shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-1 transition-all duration-300" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-        <ApiKeyInput 
-          onApiKeySet={setApiKey} 
-          hasApiKey={!!apiKey} 
-        />
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label 
             htmlFor="clinical-note" 
@@ -46,23 +45,46 @@ Physical Examination:
             <span className="text-lg">📝</span>
             Clinical Presentation
           </label>
-          <div className="relative">
-            <textarea
-              id="clinical-note"
-              value={localNote}
-              onChange={(e) => setLocalNote(e.target.value)}
-              placeholder="Describe the patient's presentation, history, physical exam findings, vital signs, and any relevant clinical context..."
-              className="w-full h-32 p-4 bg-surface border-0 border-b border-separator focus:border-accent focus:outline-none resize-none text-body text-text-primary placeholder-text-secondary transition-apple duration-apple"
-              disabled={isLoading}
-            />
-            {isLoading && (
-              <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm rounded flex items-center justify-center">
-                <div className="flex items-center gap-3 text-text-primary">
-                  <div className="animate-spin h-5 w-5 border-2 border-action border-t-transparent rounded-full"></div>
-                  <span className="font-medium text-body">AI analyzing clinical data...</span>
+          
+          {/* Main Input Row */}
+          <div className="flex gap-3 items-start">
+            {/* Textarea with Voice Button */}
+            <div className="flex-1 relative">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <textarea
+                    id="clinical-note"
+                    value={localNote}
+                    onChange={(e) => setLocalNote(e.target.value)}
+                    placeholder="Describe the patient's presentation, history, physical exam findings, vital signs, and any relevant clinical context..."
+                    className="w-full h-32 p-4 bg-surface border border-separator focus:border-accent focus:outline-none resize-none text-body text-text-primary placeholder-text-secondary transition-apple duration-apple rounded-xl"
+                    disabled={isLoading}
+                  />
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <div className="animate-spin h-5 w-5 border-2 border-action border-t-transparent rounded-full"></div>
+                        <span className="font-medium text-body">AI analyzing clinical data...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Voice Recorder Button */}
+                <div className="flex-shrink-0 pt-2">
+                  <VoiceRecorder onTranscription={handleVoiceTranscription} />
                 </div>
               </div>
-            )}
+            </div>
+            
+            {/* Compact API Key Input */}
+            <div className="flex-shrink-0 pt-2">
+              <ApiKeyInput 
+                onApiKeySet={setApiKey} 
+                hasApiKey={!!apiKey}
+                compact={true}
+              />
+            </div>
           </div>
         </div>
 

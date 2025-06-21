@@ -2,6 +2,7 @@ import type { DiagnosisNode, DiagnosisEdge } from '../types';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
 // Enhanced function calling schema for comprehensive medical reasoning
 const DIAGNOSIS_SCHEMA = {
@@ -13,8 +14,8 @@ const DIAGNOSIS_SCHEMA = {
       diagnosis_groups: {
         type: 'array',
         description: 'Groups of possible diagnoses organized by likelihood and clinical category',
-        minItems: 2,
-        maxItems: 4,
+        minItems: 1,
+        maxItems: 6,
         items: {
           type: 'object',
           properties: {
@@ -24,7 +25,7 @@ const DIAGNOSIS_SCHEMA = {
               type: 'array',
               description: 'Diagnoses within this group',
               minItems: 1,
-              maxItems: 4,
+              maxItems: 6,
               items: {
                 type: 'object',
                 properties: {
@@ -52,8 +53,8 @@ const DIAGNOSIS_SCHEMA = {
       next_actions: {
         type: 'array',
         description: 'Next action nodes that surround diagnoses - tests, treatments, monitoring',
-        minItems: 4,
-        maxItems: 12,
+        minItems: 2,
+        maxItems: 15,
         items: {
           type: 'object',
           properties: {
@@ -72,7 +73,7 @@ const DIAGNOSIS_SCHEMA = {
       relationships: {
         type: 'array',
         description: 'Clinical relationships between diagnoses and actions - create comprehensive connections',
-        minItems: 5,
+        minItems: 1,
         items: {
           type: 'object',
           properties: {
@@ -100,7 +101,7 @@ export interface OpenAIResponse {
   edges: DiagnosisEdge[];
 }
 
-export async function analyzeWithOpenAI(clinicalNote: string, apiKey: string): Promise<OpenAIResponse> {
+export async function analyzeWithOpenAI(clinicalNote: string, apiKey: string, retryCount = 0): Promise<OpenAIResponse> {
   if (!apiKey) {
     throw new Error('OpenAI API key is required');
   }
@@ -170,7 +171,8 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
           function: DIAGNOSIS_SCHEMA
         }],
         tool_choice: { type: 'function', function: { name: 'generate_comprehensive_diagnosis_workflow' } },
-        max_completion_tokens: 4000   // Updated parameter name for reasoning models
+        max_completion_tokens: 4000,   // Correct parameter for OpenAI API
+        temperature: 1    // Standard temperature for creative medical reasoning
       })
     });
 
@@ -181,11 +183,61 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
 
     const data = await response.json();
     
-    if (!data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments) {
-      throw new Error('Invalid response format from OpenAI');
+    // Comprehensive logging for debugging
+    console.log('OpenAI Response Debug:', {
+      hasChoices: !!data.choices,
+      choicesLength: data.choices?.length,
+      hasMessage: !!data.choices?.[0]?.message,
+      messageKeys: Object.keys(data.choices?.[0]?.message || {}),
+      hasToolCalls: !!data.choices?.[0]?.message?.tool_calls,
+      hasContent: !!data.choices?.[0]?.message?.content,
+      fullResponse: JSON.stringify(data, null, 2)
+    });
+
+    // Defensive response parsing
+    const call = data.choices?.[0]?.message?.tool_calls?.[0]?.function;
+    
+    // Handle missing tool_calls entirely (service-side omissions)
+    if (!data.choices?.[0]?.message?.tool_calls) {
+      console.error('No tool_calls in response - this may be a service-side omission');
+      
+      // Retry once if tool_calls is missing
+      if (retryCount === 0) {
+        console.log('Retrying OpenAI request due to missing tool_calls...');
+        return analyzeWithOpenAI(clinicalNote, apiKey, 1);
+      }
+      
+      throw new Error('OpenAI returned no tool_calls - model may have responded in plain text');
+    }
+    
+    let args = call?.arguments;
+
+    // Handle stringified JSON arguments (common issue)
+    if (typeof args === 'string') {
+      try {
+        args = JSON.parse(args);
+        console.log('Successfully parsed stringified JSON arguments');
+      } catch (parseError) {
+        console.error('Failed to parse stringified arguments:', parseError);
+        console.error('Raw arguments:', args);
+        throw new Error('Invalid JSON in function arguments');
+      }
     }
 
-    const functionResponse = JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+    if (!args?.diagnosis_groups) {
+      console.error('Missing diagnosis_groups in response. Available keys:', Object.keys(args || {}));
+      console.error('Full response structure:', data);
+      
+      // Retry once on format issues
+      if (retryCount === 0) {
+        console.log('Retrying OpenAI request due to bad format...');
+        return analyzeWithOpenAI(clinicalNote, apiKey, 1);
+      }
+      
+      throw new Error('OpenAI returned incomplete response structure - missing diagnosis_groups');
+    }
+
+    const functionResponse = args;
     
     // Create layout with diagnosis groups and surrounding action nodes
     const createGroupedLayout = () => {
@@ -272,5 +324,96 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
       throw error;
     }
     throw new Error('Failed to analyze clinical note with OpenAI');
+  }
+}
+
+export async function transcribeWithWhisper(audioBlob: Blob, apiKey: string): Promise<string> {
+  if (!apiKey) {
+    throw new Error('OpenAI API key is required');
+  }
+
+  if (!audioBlob || audioBlob.size === 0) {
+    throw new Error('Audio data is required');
+  }
+
+  // Check file size (Whisper has 25MB limit)
+  if (audioBlob.size > 25 * 1024 * 1024) {
+    throw new Error('Audio file too large. Maximum size is 25MB.');
+  }
+
+  try {
+    // Determine appropriate file extension based on MIME type
+    let fileName = 'recording.webm';
+    let mimeType = audioBlob.type;
+    
+    if (mimeType.includes('webm')) {
+      fileName = 'recording.webm';
+    } else if (mimeType.includes('mp4')) {
+      fileName = 'recording.mp4';
+    } else if (mimeType.includes('wav')) {
+      fileName = 'recording.wav';
+    } else if (mimeType.includes('opus')) {
+      fileName = 'recording.opus';
+    }
+
+    console.log(`Transcribing audio: ${fileName}, size: ${audioBlob.size} bytes, type: ${mimeType}`);
+
+    const formData = new FormData();
+    formData.append('file', audioBlob, fileName);
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'en');
+    formData.append('response_format', 'text');
+    
+    // Add temperature for more consistent results
+    formData.append('temperature', '0');
+
+    const response = await fetch(WHISPER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Unknown error';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch {
+        // If parsing JSON fails, use status text
+        errorMessage = response.statusText;
+      }
+      
+      // Provide more specific error messages
+      if (response.status === 401) {
+        throw new Error('Invalid API key. Please check your OpenAI API key.');
+      } else if (response.status === 413) {
+        throw new Error('Audio file too large. Please record shorter clips.');
+      } else if (response.status === 400) {
+        throw new Error(`Invalid audio format or request: ${errorMessage}`);
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+      
+      throw new Error(`Whisper API error (${response.status}): ${errorMessage}`);
+    }
+
+    const transcription = await response.text();
+    const cleanedTranscription = transcription.trim();
+    
+    if (!cleanedTranscription) {
+      throw new Error('No speech detected in the audio. Please try speaking more clearly.');
+    }
+
+    console.log(`Transcription successful: "${cleanedTranscription.substring(0, 100)}${cleanedTranscription.length > 100 ? '...' : ''}"`);
+    return cleanedTranscription;
+
+  } catch (error) {
+    console.error('Transcription error:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to transcribe audio with Whisper');
   }
 }

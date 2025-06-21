@@ -1,6 +1,5 @@
 import { NoteInput } from './components/NoteInput';
 import { GraphBoard } from './components/GraphBoard';
-import { Legend } from './components/Legend';
 
 function App() {
   return (
@@ -35,41 +34,31 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex min-h-[calc(100vh-73px)]">
-        {/* Left Sidebar - Legend */}
-        <aside className="w-60 bg-surface/95 backdrop-blur-sm shadow-elevation flex-shrink-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
-          <div className="h-full overflow-y-auto p-6">
-            <Legend />
+      <main className="flex flex-col min-h-[calc(100vh-73px)]">
+        {/* Input Section */}
+        <div className="bg-surface shadow-subtle" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <NoteInput />
           </div>
-        </aside>
+        </div>
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0">
-          {/* Input Section */}
-          <div className="bg-surface shadow-subtle" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-            <div className="p-6">
-              <NoteInput />
-            </div>
+        {/* Graph Visualization */}
+        <div className="flex-1 relative bg-surface">
+          <div className="absolute inset-0">
+            <GraphBoard />
           </div>
-
-          {/* Graph Visualization */}
-          <div className="flex-1 relative bg-surface">
-            <div className="absolute inset-0">
-              <GraphBoard />
-            </div>
-            
-            {/* Floating Performance Indicator */}
-            <div className="absolute top-4 right-4 z-10">
-              <div className="bg-surface/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-0.5 transition-all duration-300">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-action rounded-full animate-pulse"></div>
-                  <span className="text-text-primary text-caption font-medium">Live Analysis</span>
-                </div>
+          
+          {/* Floating Performance Indicator */}
+          <div className="absolute top-4 right-4 z-10">
+            <div className="bg-surface/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-0.5 transition-all duration-300">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-action rounded-full animate-pulse"></div>
+                <span className="text-text-primary text-caption font-medium">Live Analysis</span>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Footer */}
       <footer className="bg-surface shadow-subtle" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
