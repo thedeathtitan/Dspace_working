@@ -6,90 +6,67 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 // Enhanced function calling schema for comprehensive medical reasoning
 const DIAGNOSIS_SCHEMA = {
   name: 'generate_comprehensive_diagnosis_workflow',
-  description: 'Analyze clinical note and generate comprehensive diagnosis workflow with multiple nodes and detailed medical reasoning',
+  description: 'Analyze clinical note and generate diagnosis groups with likelihood-based sizing and next action nodes',
   parameters: {
     type: 'object',
     properties: {
-      primary_diagnoses: {
+      diagnosis_groups: {
         type: 'array',
-        description: 'Most likely primary diagnoses based on clinical findings',
-        minItems: 1,
-        maxItems: 3,
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Unique identifier' },
-            label: { type: 'string', description: 'Diagnosis name' },
-            type: { type: 'string', enum: ['diagnosis'], description: 'Node type' },
-            confidence: { type: 'number', minimum: 0.7, maximum: 1, description: 'High confidence score 0.7-1' },
-            evidence: { 
-              type: 'array', 
-              items: { type: 'string' }, 
-              description: 'Supporting clinical findings from the note',
-              minItems: 2
-            },
-            details: { type: 'string', description: 'Clinical reasoning and pathophysiology' }
-          },
-          required: ['id', 'label', 'type', 'confidence', 'evidence', 'details']
-        }
-      },
-      differential_diagnoses: {
-        type: 'array',
-        description: 'Alternative diagnoses to consider - must have at least 2-4 differentials',
+        description: 'Groups of possible diagnoses organized by likelihood and clinical category',
         minItems: 2,
-        maxItems: 5,
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Unique identifier' },
-            label: { type: 'string', description: 'Differential diagnosis name' },
-            type: { type: 'string', enum: ['differential'], description: 'Node type' },
-            confidence: { type: 'number', minimum: 0.2, maximum: 0.8, description: 'Lower confidence score' },
-            evidence: { 
-              type: 'array', 
-              items: { type: 'string' }, 
-              description: 'Supporting or concerning findings' 
-            },
-            details: { type: 'string', description: 'Why this should be considered' }
-          },
-          required: ['id', 'label', 'type', 'confidence', 'details']
-        }
-      },
-      immediate_actions: {
-        type: 'array',
-        description: 'Urgent actions needed immediately - critical tests, treatments, monitoring',
-        minItems: 1,
         maxItems: 4,
         items: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Unique identifier' },
-            label: { type: 'string', description: 'Immediate action description' },
-            type: { type: 'string', enum: ['action'], description: 'Node type' },
-            priority: { type: 'string', enum: ['urgent', 'high'], description: 'High priority only' },
-            details: { type: 'string', description: 'Why this action is needed immediately' },
-            category: { type: 'string', enum: ['diagnostic', 'therapeutic', 'monitoring'], description: 'Action category' }
+            group_id: { type: 'string', description: 'Unique group identifier' },
+            group_name: { type: 'string', description: 'Descriptive name for the diagnosis group' },
+            diagnoses: {
+              type: 'array',
+              description: 'Diagnoses within this group',
+              minItems: 1,
+              maxItems: 4,
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', description: 'Unique identifier' },
+                  label: { type: 'string', description: 'Diagnosis name' },
+                  type: { type: 'string', enum: ['diagnosis'], description: 'Node type' },
+                  likelihood: { type: 'number', minimum: 0.1, maximum: 1.0, description: 'Likelihood score 0.1-1.0 for node sizing' },
+                  confidence: { type: 'number', minimum: 0.1, maximum: 1.0, description: 'Confidence in diagnosis' },
+                  evidence: { 
+                    type: 'array', 
+                    items: { type: 'string' }, 
+                    description: 'Supporting clinical findings from the note',
+                    minItems: 1
+                  },
+                  details: { type: 'string', description: 'Clinical reasoning and pathophysiology' },
+                  category: { type: 'string', description: 'Medical category (e.g., cardiac, pulmonary, infectious)' }
+                },
+                required: ['id', 'label', 'type', 'likelihood', 'confidence', 'evidence', 'details', 'category']
+              }
+            }
           },
-          required: ['id', 'label', 'type', 'priority', 'details', 'category']
+          required: ['group_id', 'group_name', 'diagnoses']
         }
       },
-      followup_actions: {
+      next_actions: {
         type: 'array',
-        description: 'Additional tests, consultations, treatments for comprehensive workup',
-        minItems: 3,
-        maxItems: 8,
+        description: 'Next action nodes that surround diagnoses - tests, treatments, monitoring',
+        minItems: 4,
+        maxItems: 12,
         items: {
           type: 'object',
           properties: {
             id: { type: 'string', description: 'Unique identifier' },
-            label: { type: 'string', description: 'Follow-up action description' },
-            type: { type: 'string', enum: ['action'], description: 'Node type' },
-            priority: { type: 'string', enum: ['medium', 'low'], description: 'Lower priority actions' },
-            details: { type: 'string', description: 'Rationale and expected information' },
+            label: { type: 'string', description: 'Action description' },
+            type: { type: 'string', enum: ['next_action'], description: 'Node type for triangular visualization' },
+            priority: { type: 'string', enum: ['urgent', 'high', 'medium', 'low'], description: 'Action priority' },
+            details: { type: 'string', description: 'Why this action is recommended' },
             category: { type: 'string', enum: ['diagnostic', 'therapeutic', 'monitoring', 'consultation'], description: 'Action category' },
-            timing: { type: 'string', description: 'When this should be done (e.g., within 24h, outpatient, etc.)' }
+            timing: { type: 'string', description: 'When this should be done' },
+            related_diagnosis_id: { type: 'string', description: 'ID of the diagnosis this action relates to most closely' }
           },
-          required: ['id', 'label', 'type', 'priority', 'details', 'category']
+          required: ['id', 'label', 'type', 'priority', 'details', 'category', 'related_diagnosis_id']
         }
       },
       relationships: {
@@ -114,7 +91,7 @@ const DIAGNOSIS_SCHEMA = {
         }
       }
     },
-    required: ['primary_diagnoses', 'differential_diagnoses', 'immediate_actions', 'followup_actions', 'relationships']
+    required: ['diagnosis_groups', 'next_actions', 'relationships']
   }
 };
 
@@ -134,45 +111,46 @@ export async function analyzeWithOpenAI(clinicalNote: string, apiKey: string): P
 
   const systemPrompt = `You are an expert emergency medicine physician and clinical decision support system with deep medical knowledge. 
 
-Your task is to analyze clinical presentations and create comprehensive diagnostic workflows that would be used in real clinical practice.
+Your task is to analyze clinical presentations and create organized diagnosis groups with likelihood-based visualization and surrounding next action nodes.
 
 CRITICAL REQUIREMENTS:
-1. Generate AT LEAST 6-10 total nodes (diagnoses + actions combined)
-2. Include 1-3 primary diagnoses with high confidence
-3. Include 2-5 differential diagnoses to consider
-4. Include 1-4 immediate/urgent actions
-5. Include 3-8 follow-up actions for comprehensive care
-6. Create meaningful clinical relationships between all nodes
+1. Create 2-4 diagnosis groups (e.g., "Cardiac", "Pulmonary", "Infectious", "Neurologic")
+2. Each group should contain 1-4 related diagnoses with likelihood scores 0.1-1.0
+3. Generate 4-12 next action nodes that relate to specific diagnoses
+4. Likelihood scores determine node size in visualization (higher = larger circles)
+5. Next actions will be displayed as triangular nodes surrounding diagnoses
 
-MEDICAL REASONING APPROACH:
-- Consider epidemiology, clinical presentation patterns
-- Think about life-threatening conditions first
-- Include both common and serious diagnoses
-- Consider diagnostic tests that would differentiate between possibilities
-- Include both diagnostic and therapeutic interventions
-- Think about monitoring needs and follow-up care
-- Consider specialist consultations when appropriate
+DIAGNOSIS GROUPS STRUCTURE:
+- Organize diagnoses by medical system or pathophysiology
+- Assign likelihood scores based on clinical probability
+- Higher likelihood = more probable diagnosis = larger node
+- Include evidence from clinical note for each diagnosis
 
-WORKFLOW STRUCTURE:
-- Primary diagnoses should have confidence > 0.7
-- Differentials should have confidence 0.2-0.8
-- Immediate actions should be urgent/high priority
-- Follow-up actions should be medium/low priority
-- Create logical clinical relationships between diagnoses and actions`;
+NEXT ACTIONS APPROACH:
+- Create specific, actionable next steps
+- Link each action to a related diagnosis ID
+- Include diagnostic tests, treatments, monitoring, consultations
+- Vary priorities from urgent to low
+- Actions will surround their related diagnoses visually`;
 
   const userPrompt = `Clinical Presentation: ${clinicalNote}
 
-Generate a comprehensive diagnostic workflow for this patient that includes:
+Create organized diagnosis groups with likelihood-based sizing and surrounding next action nodes:
 
-1. PRIMARY DIAGNOSES (1-3): Most likely conditions based on the presentation
-2. DIFFERENTIAL DIAGNOSES (2-5): Important alternative diagnoses to consider
-3. IMMEDIATE ACTIONS (1-4): Urgent tests, treatments, or interventions needed now
-4. FOLLOW-UP ACTIONS (3-8): Additional workup, consultations, treatments for comprehensive care
-5. CLINICAL RELATIONSHIPS: How each diagnosis connects to specific actions
+1. DIAGNOSIS GROUPS (2-4 groups): Organize possible diagnoses by medical category
+   - Each diagnosis needs a likelihood score (0.1-1.0) for visual sizing
+   - Include clinical evidence supporting each diagnosis
 
-Think like an experienced clinician seeing this patient in the emergency department or clinic. What would be your complete diagnostic and management approach?
+2. NEXT ACTION NODES (4-12 actions): Specific next steps for each diagnosis
+   - Link each action to a related diagnosis ID
+   - Include tests, treatments, monitoring, consultations
+   - Vary priorities and timing appropriately
 
-IMPORTANT: Generate a substantial workflow with multiple nodes - this should reflect real clinical complexity, not oversimplified reasoning.`;
+3. CLINICAL RELATIONSHIPS: Connect diagnoses to their relevant actions
+
+Think systematically about this patient's presentation. Group related diagnoses together and identify the key next steps for each diagnostic possibility.
+
+VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions will be triangles surrounding them.`;
 
   try {
     const response = await fetch(OPENAI_API_URL, {
@@ -209,112 +187,73 @@ IMPORTANT: Generate a substantial workflow with multiple nodes - this should ref
 
     const functionResponse = JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
     
-    // Create clustered layout based on medical relationships
-    const createClusteredLayout = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const clusters: { [key: string]: { x: number; y: number; nodes: any[] } } = {};
-      const relationships = functionResponse.relationships || [];
+    // Create layout with diagnosis groups and surrounding action nodes
+    const createGroupedLayout = () => {
+      const nodes: DiagnosisNode[] = [];
+      const diagnosisGroups = functionResponse.diagnosis_groups || [];
+      const nextActions = functionResponse.next_actions || [];
       
-      // Initialize clusters for primary diagnoses
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      functionResponse.primary_diagnoses.forEach((dx: any, index: number) => {
-        clusters[dx.id] = {
-          x: 100 + (index * 600), // Wider cluster spacing for larger nodes
-          y: 50,
-          nodes: [dx]
-        };
-      });
-      
-      // Add related actions to diagnosis clusters
-      const allActions = [...functionResponse.immediate_actions, ...functionResponse.followup_actions];
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      allActions.forEach((action: any) => {
-        // Find related diagnosis
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const relatedDx = relationships.find((rel: any) =>
-          rel.source === action.id || rel.target === action.id
-        );
+      // Position diagnosis groups across the canvas
+      diagnosisGroups.forEach((group: any, groupIndex: number) => {
+        const groupCenterX = 200 + (groupIndex * 800);
+        const groupCenterY = 300;
         
-        if (relatedDx) {
-          const diagnosisId = relatedDx.source === action.id ? relatedDx.target : relatedDx.source;
-          const cluster = clusters[diagnosisId];
+        // Position diagnoses within each group
+        group.diagnoses.forEach((diagnosis: any, diagIndex: number) => {
+          const angle = (diagIndex * 2 * Math.PI) / group.diagnoses.length;
+          const radius = 50 + (group.diagnoses.length * 10);
           
-          if (cluster) {
-            cluster.nodes.push(action);
-          } else {
-            // Create new cluster for orphaned actions
-            const clusterIndex = Object.keys(clusters).length;
-            clusters[action.id] = {
-              x: 100 + (clusterIndex * 600),
-              y: 50,
-              nodes: [action]
-            };
-          }
-        } else {
-          // Create new cluster for unrelated actions
-          const clusterIndex = Object.keys(clusters).length;
-          clusters[action.id] = {
-            x: 100 + (clusterIndex * 600),
-            y: 50,
-            nodes: [action]
-          };
-        }
-      });
-      
-      // Add differential diagnoses to existing clusters or create new ones
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      functionResponse.differential_diagnoses.forEach((dx: any) => {
-        // Try to find related primary diagnosis
-        const relatedPrimary = Object.keys(clusters).find(clusterId => {
-          const cluster = clusters[clusterId];
-          return cluster.nodes.some(node => node.type === 'diagnosis');
+          nodes.push({
+            id: diagnosis.id,
+            position: {
+              x: groupCenterX + Math.cos(angle) * radius,
+              y: groupCenterY + Math.sin(angle) * radius
+            },
+            data: {
+              label: diagnosis.label,
+              type: 'diagnosis',
+              likelihood: diagnosis.likelihood,
+              confidence: diagnosis.confidence,
+              evidence: diagnosis.evidence,
+              details: diagnosis.details,
+              category: diagnosis.category,
+              group_name: group.group_name
+            }
+          });
         });
-        
-        if (relatedPrimary && clusters[relatedPrimary].nodes.length < 4) {
-          clusters[relatedPrimary].nodes.push(dx);
-        } else {
-          // Create new cluster
-          const clusterIndex = Object.keys(clusters).length;
-          clusters[dx.id] = {
-            x: 100 + (clusterIndex * 600),
-            y: 50,
-            nodes: [dx]
-          };
+      });
+      
+      // Position next actions around their related diagnoses
+      nextActions.forEach((action: any) => {
+        const relatedDiagnosis = nodes.find(n => n.id === action.related_diagnosis_id);
+        if (relatedDiagnosis) {
+          // Calculate position around the diagnosis
+          const angle = Math.random() * 2 * Math.PI;
+          const distance = 150 + Math.random() * 50;
+          
+          nodes.push({
+            id: action.id,
+            position: {
+              x: relatedDiagnosis.position.x + Math.cos(angle) * distance,
+              y: relatedDiagnosis.position.y + Math.sin(angle) * distance
+            },
+            data: {
+              label: action.label,
+              type: 'next_action',
+              priority: action.priority,
+              details: action.details,
+              category: action.category,
+              timing: action.timing,
+              related_diagnosis_id: action.related_diagnosis_id
+            }
+          });
         }
       });
       
-      return clusters;
+      return nodes;
     };
     
-    const clusters = createClusteredLayout();
-    
-    // Convert clusters to positioned nodes
-    const nodes: DiagnosisNode[] = [];
-    
-    Object.values(clusters).forEach((cluster) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cluster.nodes.forEach((node: any, index: number) => {
-        const nodeData = {
-          id: node.id,
-          position: {
-            x: cluster.x + (index % 2) * 500, // Wider spacing for larger nodes
-            y: cluster.y + Math.floor(index / 2) * 250 // More vertical spacing for larger nodes
-          },
-          data: {
-            label: node.label,
-            type: node.type,
-            confidence: node.confidence,
-            evidence: node.evidence,
-            details: node.details,
-            priority: node.priority,
-            category: node.category,
-            timing: node.timing
-          }
-        };
-        nodes.push(nodeData);
-      });
-    });
+    const nodes = createGroupedLayout();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const edges: DiagnosisEdge[] = functionResponse.relationships.map((rel: any) => ({

@@ -3,15 +3,20 @@ export type NodePosition = {
   y: number;
 };
 
-export type NodeType = 'diagnosis' | 'differential' | 'action' | 'completed';
+export type NodeType = 'diagnosis' | 'next_action' | 'completed';
 
 export interface DiagnosisNodeData extends Record<string, unknown> {
   label: string;
   type: NodeType;
   details?: string;
   confidence?: number;
+  likelihood?: number;
   evidence?: string[];
   priority?: 'urgent' | 'high' | 'medium' | 'low';
+  category?: string;
+  timing?: string;
+  group_name?: string;
+  related_diagnosis_id?: string;
 }
 
 export interface DiagnosisNode {
