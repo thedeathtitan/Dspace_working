@@ -5,6 +5,28 @@ All notable changes to the Diagnosis-Space AI platform will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-06-21
+
+### 🚀 Added
+- **Voice-to-Text Dictation** - Integrated Web Speech API for hands-free clinical note input.
+- **Advanced Graph Layout Controls** - Added a dropdown menu to dynamically switch between multiple layout algorithms (`Force`, `Hierarchical`, `Circular`, `Grid`, and `Preset`).
+- **Layout Customization** - Implemented sliders for real-time adjustment of layout properties like node spacing and physics.
+- **Reset View Functionality** - Added a button to easily reset the graph's zoom and position.
+
+### 🎨 Design
+- **Complete UI Redesign** - Overhauled the entire interface with a professional dark-mode theme, inspired by modern development environments like Cursor.
+- **New Color Palette** - Replaced the light-mode and orange accents with a high-contrast, dark-themed color scheme for improved readability and aesthetics.
+- **Component Restyling** - Updated all UI components, including inputs, buttons, and the graph itself, to match the new dark theme.
+
+### 🛠 Technical
+- **Performance Optimization** - Debounced slider controls for layout adjustments to prevent excessive re-rendering and improve UI responsiveness.
+- **Refactored Layout Logic** - Centralized and improved graph layout algorithms in `src/utils/layout.ts`.
+- **Bug Fixes** - Resolved an issue where adjusting layout sliders caused uncontrollable node scaling and zooming.
+
+### 🧪 Testing & Quality
+- **TypeScript Error Resolution** - Fixed all TypeScript errors related to unused variables to ensure a clean build process.
+- **Enhanced Graph Stability** - Addressed bugs causing unpredictable graph behavior during layout changes.
+
 ## [1.0.0] - 2025-06-14
 
 ### 🚀 Added
@@ -71,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+### [1.1.0] - 2025-06-21
+- **UI Overhaul & New Features**: Major UI redesign to a professional dark theme. Added voice input, advanced layout controls, and performance improvements.
+
 ### [1.0.0] - 2025-06-14
 - Initial release of complete clinical reasoning platform
 - Full feature implementation with production-ready codebase
@@ -108,6 +133,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ Cross-browser compatibility verification
 - ✅ Performance optimization and build tuning
 - ✅ Comprehensive documentation and project completion
+
+### Phase 6: UI Overhaul & Feature Expansion (Week 6)
+- ✅ Complete UI redesign to a professional dark theme
+- ✅ Implementation of voice-to-text for note dictation
+- ✅ Addition of advanced, dynamic graph layout controls
+- ✅ Bug fixing and performance tuning for new features
 
 ---
 

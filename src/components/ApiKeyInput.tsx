@@ -1,7 +1,22 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  Paper, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions,
+  IconButton,
+  InputAdornment,
+  Alert
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 interface ApiKeyInputProps {
-  onApiKeySet: (apiKey: string) => void;
+  onApiKeySet: (key: string) => void;
   hasApiKey: boolean;
   compact?: boolean;
 }
@@ -9,130 +24,243 @@ interface ApiKeyInputProps {
 export function ApiKeyInput({ onApiKeySet, hasApiKey, compact = false }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (apiKey.trim()) {
       onApiKeySet(apiKey.trim());
       setApiKey('');
+      setShowModal(false);
     }
   };
 
-  const handleClear = () => {
+  const handleRemove = () => {
     onApiKeySet('');
-    setApiKey('');
   };
-
-  if (hasApiKey) {
-    if (compact) {
-      return (
-        <div className="flex items-center gap-2 px-3 py-2 bg-surface rounded-xl shadow-subtle" style={{ backgroundColor: '#FFFFFF' }}>
-          <div className="w-2 h-2 bg-differential rounded-full"></div>
-          <span className="text-caption text-text-primary font-medium">API Connected</span>
-          <button
-            onClick={handleClear}
-            className="ml-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
-            title="Change API Key"
-          >
-            🔄
-          </button>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="bg-surface rounded-2xl p-6 shadow-elevation" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-differential rounded-full"></div>
-            <div>
-              <span className="text-body text-text-primary font-medium">
-                🔗 API Connected
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={handleClear}
-            className="px-3 py-1.5 text-caption text-text-secondary hover:text-text-primary bg-surface shadow-subtle hover:shadow-elevation rounded-xl transform hover:-translate-y-0.5 transition-all duration-300 font-medium"
-          >
-            🔄 Change Key
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (compact) {
     return (
-      <div className="min-w-max">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <div className="relative">
-            <input
-              type={isVisible ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="API Key (sk-...)"
-              className="w-32 px-2 py-2 text-caption bg-surface border border-separator focus:border-accent focus:outline-none rounded-lg transition-apple duration-apple"
-            />
-            <button
-              type="button"
-              onClick={() => setIsVisible(!isVisible)}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-text-secondary hover:text-text-primary transition-colors"
+      <>
+        {hasApiKey ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ 
+              width: 32, 
+              height: 32, 
+              bgcolor: 'success.main', 
+              borderRadius: 1, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center'
+            }}>
+              <Typography sx={{ color: 'white', fontSize: '0.875rem' }}>✓</Typography>
+            </Box>
+            <Button
+              onClick={handleRemove}
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': { color: 'text.primary' },
+                fontSize: '0.875rem',
+                textTransform: 'none'
+              }}
             >
-              {isVisible ? '👁️' : '🙈'}
-            </button>
-          </div>
-          <button
-            type="submit"
-            disabled={!apiKey.trim()}
-            className="px-2 py-2 text-caption bg-action text-white rounded-lg hover:bg-action/90 disabled:bg-text-secondary/50 disabled:cursor-not-allowed font-medium transition-all duration-300"
-            title="Connect API Key"
+              Remove Key
+            </Button>
+          </Box>
+        ) : (
+          <Button
+            onClick={() => setShowModal(true)}
+            variant="outlined"
+            startIcon={<Typography sx={{ fontSize: '0.75rem' }}>🔑</Typography>}
+            sx={{ 
+              px: 1.5, 
+              py: 1,
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}
           >
-            🚀
-          </button>
-        </form>
-      </div>
+            Add API Key
+          </Button>
+        )}
+
+        <Dialog 
+          open={showModal} 
+          onClose={() => setShowModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6">OpenAI API Key</Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                  OpenAI API Key
+                </Typography>
+                <TextField
+                  type={isVisible ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="sk-..."
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setIsVisible(!isVisible)}
+                          edge="end"
+                        >
+                          {isVisible ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowModal(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              variant="contained"
+              disabled={!apiKey.trim()}
+            >
+              Save Key
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 
   return (
-    <div className="bg-surface rounded-2xl p-6 shadow-elevation" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-      <div className="mb-3">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-base">🔑</span>
-          <h3 className="text-body font-medium text-text-primary">
-            API Key Required
-          </h3>
-        </div>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="relative">
-          <input
-            type={isVisible ? 'text' : 'password'}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter your API key (sk-...)"
-            className="w-full px-3 py-3 text-body bg-surface border-0 border-b border-separator focus:border-accent focus:outline-none pr-16 transition-apple duration-apple"
-          />
-          <button
-            type="button"
-            onClick={() => setIsVisible(!isVisible)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-caption text-text-secondary hover:text-text-primary bg-surface shadow-subtle hover:shadow-elevation rounded-lg hover:-translate-y-1 transition-all duration-300"
+    <Paper sx={{ p: 3, boxShadow: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+        <Box sx={{ 
+          width: 40, 
+          height: 40, 
+          bgcolor: 'primary.main', 
+          borderRadius: 1, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          boxShadow: 4
+        }}>
+          <Typography sx={{ color: 'white', fontSize: '1.125rem' }}>🔑</Typography>
+        </Box>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
+            OpenAI API Key
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Required for AI-powered analysis
+          </Typography>
+        </Box>
+      </Box>
+
+      {hasApiKey ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Alert 
+            severity="success"
+            icon={<Typography sx={{ fontSize: '0.875rem' }}>✓</Typography>}
+            sx={{ 
+              bgcolor: 'success.main',
+              color: 'white',
+              '& .MuiAlert-icon': {
+                color: 'white',
+                fontSize: '1.5rem'
+              }
+            }}
           >
-            {isVisible ? '👁️' : '🙈'}
-          </button>
-        </div>
-        
-        <button
-          type="submit"
-          disabled={!apiKey.trim()}
-          className="w-full px-4 py-3 text-body bg-action text-white rounded-xl hover:bg-action/90 disabled:bg-text-secondary/50 disabled:cursor-not-allowed font-medium shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-0.5 transition-all duration-300"
-        >
-          🚀 Connect & Activate AI
-        </button>
-      </form>
-      
-    </div>
+            <Typography sx={{ fontWeight: 500 }}>API Key Configured</Typography>
+            <Typography variant="body2">Your OpenAI API key is ready for use</Typography>
+          </Alert>
+          <Button
+            onClick={handleRemove}
+            variant="outlined"
+            fullWidth
+            sx={{ py: 1.5 }}
+          >
+            Remove API Key
+          </Button>
+        </Box>
+      ) : (
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+              Enter your OpenAI API Key
+            </Typography>
+            <TextField
+              type={isVisible ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="sk-..."
+              fullWidth
+              variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setIsVisible(!isVisible)}
+                      edge="end"
+                    >
+                      {isVisible ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
+              Your API key is stored locally and never sent to our servers
+            </Typography>
+          </Box>
+          
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={!apiKey.trim()}
+            fullWidth
+            sx={{ py: 1.5 }}
+          >
+            Save API Key
+          </Button>
+          
+          <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                bgcolor: 'secondary.main', 
+                borderRadius: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                flexShrink: 0,
+                mt: 0.25
+              }}>
+                <Typography sx={{ color: 'white', fontSize: '0.75rem' }}>ℹ️</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                  How to get an API key:
+                </Typography>
+                <Box component="ol" sx={{ color: 'text.secondary', fontSize: '0.75rem', m: 0, pl: 2 }}>
+                  <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#007acc', textDecoration: 'underline' }}>OpenAI Platform</a></li>
+                  <li>Sign in or create an account</li>
+                  <li>Navigate to API Keys section</li>
+                  <li>Create a new secret key</li>
+                  <li>Copy and paste it here</li>
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+    </Paper>
   );
 }

@@ -43,10 +43,16 @@ This application uses a frontend-only architecture:
 ## Key Implementation Details
 
 ### Cytoscape.js Setup
+- **Multiple Layouts**: Supports dynamic switching between several algorithms (Force, Hierarchical, Circular, etc.).
+- **Layout Controls**: Sliders and dropdowns for real-time adjustment of graph physics and appearance.
 - Node types: `diagnosis`, `differential`, `action`
 - Interactive layout with manual positioning
 - Click-to-expand node details
 - Pan, zoom, and fit-to-view controls
+
+### Voice Input
+- **Web Speech API**: Utilizes the browser's native speech recognition capabilities.
+- **Hands-Free Dictation**: Allows users to dictate clinical notes directly into the application, which are then transcribed to text.
 
 ### State Management
 - Single Zustand store for simplicity

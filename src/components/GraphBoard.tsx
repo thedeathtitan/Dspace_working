@@ -2,6 +2,23 @@ import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
 import type { Core } from 'cytoscape';
 import { useEffect, useState, useCallback } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  Slider, 
+  Button,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
+} from '@mui/material';
+import { Settings } from '@mui/icons-material';
 import { useDiagStore } from '../store/diagStore';
 import type { DiagnosisNode, DiagnosisEdge } from '../types';
 import { getLayoutedElements, getSmartLayout } from '../utils/layout';
@@ -45,6 +62,7 @@ export function GraphBoard() {
     coolingFactor: 0.92
   });
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
+  const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
 
   const testNodes: DiagnosisNode[] = [
     {
@@ -213,7 +231,7 @@ export function GraphBoard() {
       default:
         return getForceLayout();
     }
-  }, [layoutType, getSmartLayoutConfig, getForceLayout, getHierarchicalLayout, getCircularLayout, getGridLayout, getPresetLayout]);
+  }, [layoutType, getForceLayout, getHierarchicalLayout, getCircularLayout, getGridLayout, getPresetLayout, getSmartLayoutConfig]);
 
   useEffect(() => {
     console.log('GraphBoard: graph updated', { nodeCount: graph.nodes.length, edgeCount: graph.edges.length });
@@ -283,126 +301,6 @@ export function GraphBoard() {
     }
   }, [layoutConfig, cyInstance, elements.length, layoutType, getLayout]);
 
-  const stylesheet = [
-    {
-      selector: 'node',
-      style: {
-        label: 'data(label)',
-        'text-wrap': 'wrap',
-        'text-max-width': 160,
-        'text-valign': 'center',
-        'text-halign': 'center',
-        'font-size': 11,
-        'font-weight': '500',
-        'border-width': 1,
-        'box-shadow': '0 1px 4px rgba(0,0,0,0.08)',
-        'transition-property': 'background-color, border-color, box-shadow, width, height, transform',
-        'transition-duration': '120ms',
-        'transition-timing-function': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      }
-    },
-    {
-      selector: 'node:hover',
-      style: {
-        'box-shadow': '0 1px 4px rgba(0,0,0,0.08)',
-        transform: 'scale(1.02)'
-      }
-    },
-    {
-      selector: 'node.diagnosis',
-      style: {
-        'shape': 'ellipse',
-        'width': (ele: any) => Math.max(80, Math.min(200, 80 + (ele.data('likelihood') || 0.5) * 120)),
-        'height': (ele: any) => Math.max(80, Math.min(200, 80 + (ele.data('likelihood') || 0.5) * 120)),
-        'background-color': '#FFFFFF',
-        'border-color': '#CED0D4',
-        'color': '#1C1C1E',
-        'font-size': (ele: any) => Math.max(10, Math.min(14, 10 + (ele.data('likelihood') || 0.5) * 4))
-      }
-    },
-    {
-      selector: 'node.next_action',
-      style: {
-        'shape': 'triangle',
-        'width': 60,
-        'height': 60,
-        'background-color': '#FFF8F0',
-        'border-color': '#FF9500',
-        'color': '#1C1C1E',
-        'font-size': 9,
-        'text-max-width': 120
-      }
-    },
-    {
-      selector: 'node.next_action[category="diagnostic"]',
-      style: {
-        'background-color': '#e0f2fe',
-        'border-color': '#0ea5e9',
-        'color': '#0c4a6e'
-      }
-    },
-    {
-      selector: 'node.next_action[category="therapeutic"]',
-      style: {
-        'background-color': '#f0fdf4',
-        'border-color': '#34C759',
-        'color': '#1C1C1E'
-      }
-    },
-    {
-      selector: 'node.next_action[category="monitoring"]',
-      style: {
-        'background-color': '#fffbeb',
-        'border-color': '#FF9500',
-        'color': '#1C1C1E'
-      }
-    },
-    {
-      selector: 'node.next_action[category="consultation"]',
-      style: {
-        'background-color': '#fef2f2',
-        'border-color': '#FF3B30',
-        'color': '#1C1C1E'
-      }
-    },
-    {
-      selector: 'node.completed',
-      style: {
-        'background-color': '#d1fae5',
-        'border-color': '#10b981',
-        'color': '#059669',
-        'text-decoration': 'line-through',
-        'opacity': 0.7
-      }
-    },
-    {
-      selector: 'edge',
-      style: {
-        width: 1,
-        'line-color': '#E5E5E5',
-        'target-arrow-color': '#E5E5E5',
-        'target-arrow-shape': 'triangle',
-        'arrow-scale': 1.2,
-        label: 'data(label)',
-        'font-size': 10,
-        'font-weight': '500',
-        'text-background-color': '#FFFFFF',
-        'text-background-opacity': 0.9,
-        'text-background-padding': 3,
-        'curve-style': 'bezier',
-        'control-point-step-size': 40
-      }
-    },
-    {
-      selector: 'edge:hover',
-      style: {
-        width: 2,
-        'line-color': '#6E6E73',
-        'target-arrow-color': '#6E6E73'
-      }
-    }
-  ];
-
   const handleCy = (cy: Core) => {
     // Store cy instance for layout management
     setCyInstance(cy);
@@ -418,207 +316,536 @@ export function GraphBoard() {
     });
   };
 
+  const applyLayout = () => {
+    if (cyInstance && elements.length > 0) {
+      const layout = cyInstance.layout(getLayout());
+      layout.run();
+    }
+    setLayoutDialogOpen(false);
+  };
+
+  const resetView = () => {
+    if (cyInstance) {
+      cyInstance.fit();
+      cyInstance.center();
+    }
+  };
+
   return (
-    <div className="flex-1 bg-surface shadow-elevation relative" style={{ height: '80vh', width: '100%' }}>
-      {/* Layout Controls */}
-      <div className="absolute top-4 left-4 bg-surface/90 backdrop-blur-sm rounded-2xl p-4 shadow-elevation z-10">
-        <h3 className="font-semibold text-text-primary mb-3">Layout Controls</h3>
-        
-        {/* Layout Type Selector */}
-        <div className="mb-4">
-          <label className="block text-caption text-text-secondary mb-2">Layout Type</label>
-          <select 
-            value={layoutType} 
-            onChange={(e) => setLayoutType(e.target.value as LayoutType)}
-            className="w-full px-3 py-2 border border-separator rounded-lg bg-surface text-text-primary text-sm"
+    <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: 'background.default' }}>
+      {/* Cytoscape Graph */}
+      <Box sx={{ flex: 1, position: 'relative' }}>
+        <CytoscapeComponent
+          elements={elements}
+          style={{ width: '100%', height: '100%' }}
+          cy={handleCy}
+          layout={getLayout()}
+          stylesheet={[
+            {
+              selector: 'node',
+              style: {
+                'background-color': '#007acc',
+                'label': 'data(label)',
+                'color': '#ffffff',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'font-size': '12px',
+                'font-weight': 'bold',
+                'text-wrap': 'wrap',
+                'text-max-width': '120px',
+                'border-width': 2,
+                'border-color': '#ffffff',
+                'width': 'data(size)',
+                'height': 'data(size)',
+                'shape': 'data(shape)',
+                'text-outline-width': 1,
+                'text-outline-color': '#000000',
+              }
+            },
+            {
+              selector: 'node[type="diagnosis"]',
+              style: {
+                'background-color': '#007acc',
+                'shape': 'ellipse',
+                'width': function(ele: any) {
+                  const likelihood = ele.data('likelihood') || 0.5;
+                  const confidence = ele.data('confidence') || 0.5;
+                  const probability = (likelihood + confidence) / 2;
+                  return Math.max(60, Math.min(200, 60 + probability * 140));
+                },
+                'height': function(ele: any) {
+                  const likelihood = ele.data('likelihood') || 0.5;
+                  const confidence = ele.data('confidence') || 0.5;
+                  const probability = (likelihood + confidence) / 2;
+                  return Math.max(60, Math.min(200, 60 + probability * 140));
+                },
+                'font-size': function(ele: any) {
+                  const likelihood = ele.data('likelihood') || 0.5;
+                  const confidence = ele.data('confidence') || 0.5;
+                  const probability = (likelihood + confidence) / 2;
+                  return Math.max(10, Math.min(16, 10 + probability * 6));
+                }
+              }
+            },
+            {
+              selector: 'node[type="next_action"]',
+              style: {
+                'background-color': '#10b981',
+                'shape': 'triangle',
+                'width': function(ele: any) {
+                  const priority = ele.data('priority');
+                  if (priority === 'urgent') return 80;
+                  if (priority === 'high') return 70;
+                  if (priority === 'medium') return 60;
+                  return 50;
+                },
+                'height': function(ele: any) {
+                  const priority = ele.data('priority');
+                  if (priority === 'urgent') return 80;
+                  if (priority === 'high') return 70;
+                  if (priority === 'medium') return 60;
+                  return 50;
+                }
+              }
+            },
+            {
+              selector: 'node[type="differential"]',
+              style: {
+                'background-color': '#60a5fa',
+                'shape': 'ellipse',
+                'width': function(ele: any) {
+                  const likelihood = ele.data('likelihood') || 0.5;
+                  return Math.max(50, Math.min(150, 50 + likelihood * 100));
+                },
+                'height': function(ele: any) {
+                  const likelihood = ele.data('likelihood') || 0.5;
+                  return Math.max(50, Math.min(150, 50 + likelihood * 100));
+                }
+              }
+            },
+            {
+              selector: 'node[priority="urgent"]',
+              style: {
+                'background-color': '#ef4444',
+              }
+            },
+            {
+              selector: 'node[priority="high"]',
+              style: {
+                'background-color': '#f97316',
+              }
+            },
+            {
+              selector: 'node[priority="medium"]',
+              style: {
+                'background-color': '#eab308',
+              }
+            },
+            {
+              selector: 'node[priority="low"]',
+              style: {
+                'background-color': '#22c55e',
+              }
+            },
+            {
+              selector: 'edge',
+              style: {
+                'width': 2,
+                'line-color': '#666666',
+                'target-arrow-color': '#666666',
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                'font-size': '10px',
+                'color': '#ffffff',
+                'text-outline-width': 1,
+                'text-outline-color': '#000000',
+              }
+            },
+            {
+              selector: 'node:selected',
+              style: {
+                'border-width': 4,
+                'border-color': '#007acc',
+                'border-opacity': 0.8,
+              }
+            },
+            {
+              selector: 'edge:selected',
+              style: {
+                'width': 4,
+                'line-color': '#007acc',
+                'target-arrow-color': '#007acc',
+              }
+            }
+          ]}
+        />
+
+        {/* Layout Controls Button */}
+        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+          <IconButton
+            onClick={() => setLayoutDialogOpen(true)}
+            sx={{ 
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+              boxShadow: 2,
+              '&:hover': {
+                bgcolor: 'background.default',
+                boxShadow: 3,
+              }
+            }}
           >
-            <option value="smart">Smart (Auto)</option>
-            <option value="force">Force-Directed</option>
-            <option value="hierarchical">Hierarchical</option>
-            <option value="circular">Circular</option>
-            <option value="grid">Grid</option>
-            <option value="preset">Preset (LLM)</option>
-          </select>
-        </div>
+            <Settings />
+          </IconButton>
+        </Box>
 
-        {/* Force Layout Controls */}
-        {layoutType === 'force' && (
-          <div className="space-y-3">
-            <div>
-              <label className="block text-caption text-text-secondary mb-1">
-                Node Repulsion: {layoutConfig.nodeRepulsion}
-              </label>
-              <input
-                type="range"
-                min="5000"
-                max="50000"
-                step="1000"
-                value={layoutConfig.nodeRepulsion}
-                onChange={(e) => setLayoutConfig(prev => ({ ...prev, nodeRepulsion: parseInt(e.target.value) }))}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-caption text-text-secondary mb-1">
-                Edge Length: {layoutConfig.idealEdgeLength}
-              </label>
-              <input
-                type="range"
-                min="100"
-                max="500"
-                step="25"
-                value={layoutConfig.idealEdgeLength}
-                onChange={(e) => setLayoutConfig(prev => ({ ...prev, idealEdgeLength: parseInt(e.target.value) }))}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-caption text-text-secondary mb-1">
-                Gravity: {layoutConfig.gravity}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={layoutConfig.gravity}
-                onChange={(e) => setLayoutConfig(prev => ({ ...prev, gravity: parseFloat(e.target.value) }))}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-caption text-text-secondary mb-1">
-                Iterations: {layoutConfig.numIter}
-              </label>
-              <input
-                type="range"
-                min="500"
-                max="3000"
-                step="100"
-                value={layoutConfig.numIter}
-                onChange={(e) => setLayoutConfig(prev => ({ ...prev, numIter: parseInt(e.target.value) }))}
-                className="w-full"
-              />
-            </div>
-          </div>
+        {/* Node Details Panel */}
+        {selected && (
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 16, 
+            right: 16, 
+            bgcolor: 'background.paper', 
+            border: 1, 
+            borderColor: 'divider', 
+            borderRadius: 1, 
+            p: 3, 
+            maxWidth: 320, 
+            boxShadow: 3,
+            '&:hover': {
+              boxShadow: 6,
+              transform: 'translateY(-4px)',
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <Box sx={{ 
+                width: 40, 
+                height: 40, 
+                bgcolor: 'primary.main', 
+                borderRadius: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center'
+              }}>
+                <Typography sx={{ color: 'white', fontSize: '1.125rem' }}>
+                  {selected.type === 'diagnosis' ? '🏥' : selected.type === 'next_action' ? '⚡' : '🔍'}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  {selected.label}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                  <Chip 
+                    label={selected.type} 
+                    size="small" 
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      fontWeight: 500
+                    }}
+                  />
+                  {selected.likelihood && (
+                    <Chip 
+                      label={`${Math.round(selected.likelihood * 100)}%`} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: 'success.main',
+                        color: 'white',
+                        fontSize: '0.75rem',
+                        fontWeight: 500
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {selected.group_name && (
+              <Paper sx={{ mb: 1.5, p: 1.5, bgcolor: 'background.default' }}>
+                <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                  Group: {selected.group_name}
+                </Typography>
+              </Paper>
+            )}
+
+            {selected.details && (
+              <Paper sx={{ mb: 2, p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>
+                  {selected.details}
+                </Typography>
+              </Paper>
+            )}
+
+            {(selected.likelihood || selected.confidence) && (
+              <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+                {selected.likelihood && (
+                  <Box sx={{ flex: 1 }}>
+                    <Paper sx={{ 
+                      p: 1.5, 
+                      bgcolor: 'background.default',
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 500, display: 'block', mb: 0.5 }}>
+                        Likelihood
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                        {Math.round(selected.likelihood * 100)}%
+                      </Typography>
+                    </Paper>
+                  </Box>
+                )}
+                {selected.confidence && (
+                  <Box sx={{ flex: 1 }}>
+                    <Paper sx={{ 
+                      p: 1.5, 
+                      bgcolor: 'background.default',
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 500, display: 'block', mb: 0.5 }}>
+                        Confidence
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                        {Math.round(selected.confidence * 100)}%
+                      </Typography>
+                    </Paper>
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {selected.priority && (
+              <Paper sx={{ mb: 1.5, p: 1.5, bgcolor: 'background.default' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    Priority:
+                  </Typography>
+                  <Chip 
+                    label={selected.priority} 
+                    size="small" 
+                    sx={{ 
+                      bgcolor: selected.priority === 'urgent' ? 'error.main' :
+                              selected.priority === 'high' ? 'warning.main' :
+                              selected.priority === 'medium' ? 'warning.light' : 'success.main',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      fontWeight: 500
+                    }}
+                  />
+                </Box>
+              </Paper>
+            )}
+
+            {selected.category && (
+              <Paper sx={{ mb: 1.5, p: 1.5, bgcolor: 'background.default' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    Category:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                    {selected.category}
+                  </Typography>
+                </Box>
+              </Paper>
+            )}
+
+            {selected.timing && (
+              <Paper sx={{ mb: 1.5, p: 1.5, bgcolor: 'background.default' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    Timing:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                    {selected.timing}
+                  </Typography>
+                </Box>
+              </Paper>
+            )}
+
+            {selected.evidence && selected.evidence.length > 0 && (
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'text.primary' }}>
+                  Clinical Evidence:
+                </Typography>
+                <Box component="ul" sx={{ m: 0, p: 0, pl: 2 }}>
+                  {selected.evidence.map((evidence, i) => (
+                    <Typography 
+                      key={i} 
+                      component="li" 
+                      variant="caption" 
+                      sx={{ 
+                        color: 'text.primary', 
+                        display: 'flex', 
+                        alignItems: 'flex-start', 
+                        gap: 1,
+                        mb: 0.5
+                      }}
+                    >
+                      <Typography component="span" sx={{ color: 'primary.main', mt: 0.25 }}>•</Typography>
+                      {evidence}
+                    </Typography>
+                  ))}
+                </Box>
+              </Paper>
+            )}
+          </Box>
         )}
+      </Box>
 
-        {/* Apply Layout Button */}
-        <button
-          onClick={() => {
-            if (cyInstance && elements.length > 0) {
-              const layout = cyInstance.layout(getLayout());
-              layout.run();
-            }
-          }}
-          className="w-full mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
-        >
-          Apply Layout
-        </button>
+      {/* Layout Controls Dialog */}
+      <Dialog 
+        open={layoutDialogOpen} 
+        onClose={() => setLayoutDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Settings />
+            <Typography variant="h6">Layout Controls</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+            {/* Layout Type Selector */}
+            <Box>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                Layout Type
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={layoutType}
+                  onChange={(e) => setLayoutType(e.target.value as LayoutType)}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'primary.main',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <MenuItem value="smart">Smart Layout</MenuItem>
+                  <MenuItem value="force">Force-Directed</MenuItem>
+                  <MenuItem value="hierarchical">Hierarchical</MenuItem>
+                  <MenuItem value="circular">Circular</MenuItem>
+                  <MenuItem value="grid">Grid</MenuItem>
+                  <MenuItem value="preset">Preset</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
-        {/* Reset View Button */}
-        <button
-          onClick={() => {
-            if (cyInstance) {
-              cyInstance.fit();
-              cyInstance.center();
-            }
-          }}
-          className="w-full mt-2 px-4 py-2 bg-text-secondary/10 text-text-secondary rounded-lg hover:bg-text-secondary/20 transition-colors text-sm font-medium"
-        >
-          Reset View
-        </button>
-      </div>
+            {/* Layout Configuration Sliders */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                  Node Repulsion: {layoutConfig.nodeRepulsion}
+                </Typography>
+                <Slider
+                  value={layoutConfig.nodeRepulsion}
+                  onChange={(_, value) => setLayoutConfig(prev => ({ ...prev, nodeRepulsion: value as number }))}
+                  min={1000}
+                  max={50000}
+                  step={1000}
+                  sx={{
+                    color: 'primary.main',
+                    '& .MuiSlider-track': {
+                      bgcolor: 'divider',
+                    },
+                    '& .MuiSlider-thumb': {
+                      bgcolor: 'primary.main',
+                    },
+                  }}
+                />
+              </Box>
 
-      <CytoscapeComponent
-        elements={elements}
-        stylesheet={stylesheet}
-        layout={getLayout()}
-        cy={handleCy}
-        style={{ width: '100%', height: '100%' }}
-      />
-      {selected && (
-        <div className="absolute top-4 right-4 bg-surface/90 backdrop-blur-sm rounded-2xl p-4 max-w-sm text-body shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-1 transition-all duration-300">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-text-primary">{selected.label}</h3>
-            {selected.type === 'diagnosis' && (
-              <span className="bg-diagnosis/10 text-diagnosis px-2 py-1 rounded-full text-caption">
-                Diagnosis
-              </span>
-            )}
-            {selected.type === 'next_action' && (
-              <span className="bg-action/10 text-action px-2 py-1 rounded-full text-caption">
-                Action
-              </span>
-            )}
-          </div>
-          
-          {selected.group_name && (
-            <p className="text-text-secondary mb-2 text-caption">Group: {selected.group_name}</p>
-          )}
-          
-          {selected.details && <p className="mb-2 text-text-primary">{selected.details}</p>}
-          
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            {selected.likelihood && (
-              <div className="text-center p-2 bg-diagnosis/5 rounded border border-separator">
-                <div className="text-caption text-text-secondary">Likelihood</div>
-                <div className="font-semibold text-diagnosis">
-                  {Math.round(selected.likelihood * 100)}%
-                </div>
-              </div>
-            )}
-            {selected.confidence && (
-              <div className="text-center p-2 bg-differential/5 rounded border border-separator">
-                <div className="text-caption text-text-secondary">Confidence</div>
-                <div className="font-semibold text-differential">
-                  {Math.round(selected.confidence * 100)}%
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {selected.priority && (
-            <p className="mb-2 text-text-primary">
-              <span className="font-medium">Priority:</span> 
-              <span className={`ml-1 px-2 py-1 rounded text-caption ${
-                selected.priority === 'urgent' ? 'bg-action/10 text-action' :
-                selected.priority === 'high' ? 'bg-action/10 text-action' :
-                selected.priority === 'medium' ? 'bg-differential/10 text-differential' :
-                'bg-text-secondary/10 text-text-secondary'
-              }`}>
-                {selected.priority}
-              </span>
-            </p>
-          )}
-          
-          {selected.category && (
-            <p className="mb-2 text-text-primary">
-              <span className="font-medium">Category:</span> <span className="text-text-secondary">{selected.category}</span>
-            </p>
-          )}
-          
-          {selected.timing && (
-            <p className="mb-2 text-text-primary">
-              <span className="font-medium">Timing:</span> <span className="text-text-secondary">{selected.timing}</span>
-            </p>
-          )}
-          
-          {selected.evidence && selected.evidence.length > 0 && (
-            <div>
-              <div className="font-medium mb-1 text-text-primary">Clinical Evidence:</div>
-              <ul className="list-disc pl-5 space-y-1">
-                {selected.evidence.map((e, i) => (
-                  <li key={i} className="text-text-secondary text-caption">{e}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                  Edge Length: {layoutConfig.idealEdgeLength}
+                </Typography>
+                <Slider
+                  value={layoutConfig.idealEdgeLength}
+                  onChange={(_, value) => setLayoutConfig(prev => ({ ...prev, idealEdgeLength: value as number }))}
+                  min={50}
+                  max={500}
+                  step={10}
+                  sx={{
+                    color: 'primary.main',
+                    '& .MuiSlider-track': {
+                      bgcolor: 'divider',
+                    },
+                    '& .MuiSlider-thumb': {
+                      bgcolor: 'primary.main',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                  Gravity: {layoutConfig.gravity}
+                </Typography>
+                <Slider
+                  value={layoutConfig.gravity}
+                  onChange={(_, value) => setLayoutConfig(prev => ({ ...prev, gravity: value as number }))}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  sx={{
+                    color: 'primary.main',
+                    '& .MuiSlider-track': {
+                      bgcolor: 'divider',
+                    },
+                    '& .MuiSlider-thumb': {
+                      bgcolor: 'primary.main',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontWeight: 500 }}>
+                  Iterations: {layoutConfig.numIter}
+                </Typography>
+                <Slider
+                  value={layoutConfig.numIter}
+                  onChange={(_, value) => setLayoutConfig(prev => ({ ...prev, numIter: value as number }))}
+                  min={100}
+                  max={3000}
+                  step={100}
+                  sx={{
+                    color: 'primary.main',
+                    '& .MuiSlider-track': {
+                      bgcolor: 'divider',
+                    },
+                    '& .MuiSlider-thumb': {
+                      bgcolor: 'primary.main',
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLayoutDialogOpen(false)} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={resetView} variant="outlined">
+            Reset View
+          </Button>
+          <Button onClick={applyLayout} variant="contained">
+            Apply Layout
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

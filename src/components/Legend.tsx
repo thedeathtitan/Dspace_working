@@ -1,67 +1,110 @@
+import { Box, Typography, Paper } from '@mui/material';
+
 export function Legend() {
   const legendItems = [
     {
       icon: '🩺',
       label: 'Primary Diagnosis',
-      color: 'diagnosis'
+      color: 'primary.main'
     },
     {
       icon: '🤔',
       label: 'Differential Diagnosis',
-      color: 'differential'
+      color: 'secondary.main'
     },
     {
       icon: '🚨',
       label: 'Urgent Action',
-      color: 'action'
+      color: 'error.main'
     },
     {
       icon: '⚡',
       label: 'High Priority Action',
-      color: 'action'
+      color: 'warning.main'
     },
     {
       icon: '📋',
       label: 'Standard Action',
-      color: 'completed'
+      color: 'success.main'
     }
   ];
 
-
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Main Legend Card */}
-      <div className="bg-surface rounded-2xl p-6 shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-1 transition-all duration-300" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-6 h-6 bg-action rounded flex items-center justify-center">
-            <span className="text-white text-xs font-bold">🧾</span>
-          </div>
-          <h3 className="text-title-2 font-semibold text-text-primary">
+      <Paper sx={{ 
+        borderRadius: 3, 
+        p: 3, 
+        boxShadow: 2,
+        '&:hover': {
+          boxShadow: 3,
+          transform: 'translateY(-4px)',
+        },
+        transition: 'all 0.3s ease',
+        bgcolor: 'background.paper'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box sx={{ 
+            width: 24, 
+            height: 24, 
+            bgcolor: 'warning.main', 
+            borderRadius: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center'
+          }}>
+            <Typography sx={{ color: 'white', fontSize: '0.75rem', fontWeight: 'bold' }}>🧾</Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
             Clinical Workflow Guide
-          </h3>
-        </div>
+          </Typography>
+        </Box>
         
         {/* Node Types */}
-        <div className="space-y-3 mb-6">
-          <h4 className="text-caption font-medium text-text-secondary flex items-center gap-2">
-            <span className="w-2 h-2 bg-action rounded-full"></span>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+          <Typography variant="caption" sx={{ 
+            fontWeight: 500, 
+            color: 'text.secondary', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1 
+          }}>
+            <Box sx={{ width: 8, height: 8, bgcolor: 'warning.main', borderRadius: '50%' }} />
             Node Classifications
-          </h4>
+          </Typography>
           {legendItems.map((item, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-bg-base shadow-subtle hover:shadow-elevation transform hover:-translate-y-0.5 transition-all duration-300">
-              <div className={`bg-${item.color} text-white rounded p-2 flex items-center justify-center`}>
-                <span className="text-sm">{item.icon}</span>
-              </div>
-              <div className="font-medium text-body text-text-primary">
+            <Box key={index} sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5, 
+              p: 1.5, 
+              borderRadius: 2, 
+              bgcolor: 'background.default', 
+              boxShadow: 1,
+              '&:hover': {
+                boxShadow: 2,
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.3s ease'
+            }}>
+              <Box sx={{ 
+                bgcolor: item.color, 
+                color: 'white', 
+                borderRadius: 1, 
+                p: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center'
+              }}>
+                <Typography sx={{ fontSize: '0.875rem' }}>{item.icon}</Typography>
+              </Box>
+              <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {item.label}
-              </div>
-            </div>
+              </Typography>
+            </Box>
           ))}
-        </div>
-
-        
-      </div>
-
-    </div>
+        </Box>
+      </Paper>
+    </Box>
   );
 }

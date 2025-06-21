@@ -52,9 +52,6 @@ export const getForceLayoutedElements = (
   } = {}
 ) => {
   const {
-    nodeRepulsion = 25000,
-    idealEdgeLength = 250,
-    gravity = 0.1,
     clustering = true
   } = options;
 
@@ -133,7 +130,6 @@ export const getSmartLayout = (
   edges: DiagnosisEdge[]
 ) => {
   const nodeCount = nodes.length;
-  const edgeCount = edges.length;
   const hasHierarchy = edges.some(edge => edge.type === 'next-step');
   
   // Choose layout based on graph characteristics
@@ -161,3 +157,59 @@ export const getSmartLayout = (
     return getForceLayoutedElements(nodes, edges);
   }
 };
+
+export type LayoutType = 'smart' | 'force' | 'hierarchical' | 'circular' | 'grid' | 'preset';
+
+export interface LayoutConfig {
+  nodeRepulsion: number;
+  idealEdgeLength: number;
+  gravity: number;
+  numIter: number;
+}
+
+export const defaultLayoutConfig: LayoutConfig = {
+  nodeRepulsion: 25000,
+  idealEdgeLength: 250,
+  gravity: 0.1,
+  numIter: 1000,
+};
+
+export function getForceLayout(): any {
+  return {
+    name: 'cose',
+    fit: true,
+    padding: 50,
+    stop: function() {},
+    ready: function() {},
+  };
+}
+
+export function getHierarchicalLayout(): any {
+  return {
+    name: 'dagre',
+    fit: true,
+    padding: 50,
+    stop: function() {},
+    ready: function() {},
+  };
+}
+
+export function getCircularLayout(): any {
+  return {
+    name: 'circle',
+    fit: true,
+    padding: 50,
+    stop: function() {},
+    ready: function() {},
+  };
+}
+
+export function getGridLayout(): any {
+  return {
+    name: 'grid',
+    fit: true,
+    padding: 50,
+    stop: function() {},
+    ready: function() {},
+  };
+}

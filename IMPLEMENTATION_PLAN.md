@@ -1,9 +1,9 @@
 # Diagnosis-Space Implementation Plan
 
 ## Project Overview
-A Cytoscape.js-based application for visualizing medical diagnosis workflows, converting free-text clinical notes into interactive network graphs with diagnoses, differential diagnoses, and suggested actions.
+A Cytoscape.js-based application for visualizing medical diagnosis workflows, converting free-text or voice-dictated clinical notes into interactive network graphs with diagnoses, differential diagnoses, and suggested actions.
 
-**Status**: ✅ **COMPLETED** - Version 1.0.0 Released
+**Status**: ✅ **COMPLETED** - Version 1.1.0 Released
 
 ## Architecture Components
 
@@ -30,8 +30,9 @@ A Cytoscape.js-based application for visualizing medical diagnosis workflows, co
 <App>
  ├── <Header />           // Application title and status
  ├── <Sidebar>
- │   └── <Legend />       // Node type reference and controls
- ├── <NoteInput />        // Clinical note input with API key
+ │   ├── <Legend />       // Node type reference and controls
+ │   └── <VoiceRecorder />// Voice input for clinical notes
+ ├── <NoteInput />        // Text input for clinical notes
  └── <GraphBoard />       // Cytoscape network visualization
 ```
 
@@ -66,7 +67,7 @@ interface DiagStore {
 ### Phase 2: Cytoscape Integration ✅ COMPLETED
 - [x] Set up GraphBoard component with Cytoscape.js
 - [x] Implement interactive node system
-- [x] Create intelligent layout algorithms
+- [x] Implement multiple dynamic layout algorithms (Force-Directed, Hierarchical, Circular) with user controls
 - [x] Add pan, zoom, and fit-to-view controls
 - [x] Style nodes with priority-based color coding
 
@@ -79,10 +80,11 @@ interface DiagStore {
 ### Phase 4: Interactivity Features ✅ COMPLETED
 - [x] Click-to-expand node details system
 - [x] Interactive graph navigation
-- [x] Real-time analysis and visualization
+- [x] Voice-to-text input for clinical notes using Web Speech API
 - [x] Complete medical workflow generation
 
 ### Phase 5: Polish & Testing ✅ COMPLETED
+- [x] Complete UI redesign to a professional, dark-mode theme
 - [x] Add comprehensive loading states and error handling
 - [x] Implement fully responsive design
 - [x] Manual testing across browsers and devices
@@ -177,7 +179,8 @@ diagnosis-space/
 │   │   ├── ApiKeyInput.tsx      # Secure API key management
 │   │   ├── GraphBoard.tsx       # Cytoscape network visualization
 │   │   ├── Legend.tsx           # Node type legend and controls
-│   │   └── NoteInput.tsx        # Clinical note input form
+│   │   ├── NoteInput.tsx        # Clinical note input form
+│   │   └── VoiceRecorder.tsx  # Voice input component
 │   ├── store/
 │   │   └── diagStore.ts         # Zustand state management
 │   ├── utils/
@@ -204,7 +207,7 @@ All implementation phases have been successfully completed:
 1. ✅ Complete frontend architecture with React + TypeScript
 2. ✅ Cytoscape.js integration with interactive visualization
 3. ✅ OpenAI API integration with structured medical analysis
-4. ✅ Professional healthcare interface design
+4. ✅ Professional dark-mode healthcare interface design
 5. ✅ Production-ready build system and deployment
 6. ✅ Comprehensive documentation and developer resources
 

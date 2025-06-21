@@ -2,14 +2,20 @@
 
 ## Clinical Reasoning Intelligence Platform
 
-A sophisticated web application that integrates OpenAI's advanced reasoning capabilities with interactive network visualization to create comprehensive medical diagnostic workflows. Features a clean, professional interface designed for healthcare environments.
+A sophisticated web application that integrates OpenAI's advanced reasoning capabilities with interactive network visualization to create comprehensive medical diagnostic workflows. It now features a professional dark-mode theme, voice-to-text dictation, and advanced graph layout controls.
+
+![New Dark UI](https://firebasestorage.googleapis.com/v0/b/project-assets-253613.appspot.com/o/github_assets%2FDspace_darkmode.png?alt=media&token=e8869c58-39a1-4643-9844-3c87a9c0490f)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19.1-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-green.svg)
 
 ## 🚀 Features
+
+### 🎤 Voice-to-Text Input
+- **Hands-Free Dictation**: Use your microphone to dictate clinical notes directly into the application.
+- **Web Speech API**: Powered by the browser's built-in speech recognition for fast and accurate transcription.
 
 ### 🧠 AI-Powered Clinical Analysis
 - **OpenAI Integration**: Advanced language models for comprehensive medical analysis
@@ -18,7 +24,7 @@ A sophisticated web application that integrates OpenAI's advanced reasoning capa
 - **Confidence Scoring**: Quantified certainty levels for medical decision support
 
 ### 🎨 Professional Healthcare Interface
-- **Clean Design**: Modern, professional aesthetic optimized for medical environments
+- **Professional Dark Theme**: A complete UI overhaul featuring a modern, high-contrast dark mode inspired by IDEs like Cursor.
 - **Medical-Grade UI**: Interface components designed for healthcare workflows
 - **Responsive Layout**: Seamless experience across desktop, tablet, and mobile devices
 - **Accessibility**: WCAG-compliant design with keyboard navigation support
@@ -27,7 +33,7 @@ A sophisticated web application that integrates OpenAI's advanced reasoning capa
 - **Node-Based Workflow**: Medical concepts represented as interactive network nodes
 - **Expandable Details**: Click nodes to reveal comprehensive diagnostic information
 - **Color-Coded Priority**: Visual hierarchy indicating clinical urgency levels
-- **Dynamic Layout**: Automatic positioning with manual adjustment capabilities
+- **Advanced Dynamic Layouts**: Choose from multiple layout algorithms (Force-Directed, Hierarchical, etc.) and fine-tune them with real-time controls.
 
 ### 🔒 Privacy & Security
 - **Local Processing**: API keys stored securely in browser only
@@ -108,7 +114,8 @@ src/
 │   ├── ApiKeyInput.tsx   # Secure API key management
 │   ├── GraphBoard.tsx    # Cytoscape visualization component
 │   ├── Legend.tsx        # Interface legend and controls
-│   └── NoteInput.tsx     # Clinical note input form
+│   ├── NoteInput.tsx     # Clinical note input form
+│   └── VoiceRecorder.tsx # Voice dictation component
 ├── store/               # State management
 │   └── diagStore.ts     # Zustand store with localStorage persistence
 ├── types/               # TypeScript definitions

@@ -134,4 +134,4 @@ Template for pull requests to the Diagnosis-Space AI clinical reasoning platform
 ---
 
 **Template Last Updated**: June 2025  
-**Project**: Diagnosis-Space AI v1.0.0
+**Project**: Diagnosis-Space AI v1.1.0

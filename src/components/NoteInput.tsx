@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Typography, TextField, Button, Alert, CircularProgress } from '@mui/material';
 import { useDiagStore } from '../store/diagStore';
 import { ApiKeyInput } from './ApiKeyInput';
 import { VoiceRecorder } from './VoiceRecorder';
@@ -35,109 +36,190 @@ Physical Examination:
   };
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label 
-            htmlFor="clinical-note" 
-            className="block text-title-3 font-medium text-text-primary mb-3 flex items-center gap-2"
-          >
-            <span className="text-lg">📝</span>
-            Clinical Presentation
-          </label>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              bgcolor: 'primary.main', 
+              borderRadius: 1, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              boxShadow: 4
+            }}>
+              <Typography sx={{ color: 'white', fontSize: '1.125rem' }}>📝</Typography>
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                Clinical Presentation
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                Describe the patient's case for AI analysis
+              </Typography>
+            </Box>
+          </Box>
           
           {/* Main Input Row */}
-          <div className="flex gap-3 items-start">
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
             {/* Textarea with Voice Button */}
-            <div className="flex-1 relative">
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <textarea
+            <Box sx={{ flex: 1, position: 'relative' }}>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <Box sx={{ flex: 1, position: 'relative' }}>
+                  <TextField
                     id="clinical-note"
+                    multiline
+                    rows={6}
                     value={localNote}
                     onChange={(e) => setLocalNote(e.target.value)}
                     placeholder="Describe the patient's presentation, history, physical exam findings, vital signs, and any relevant clinical context..."
-                    className="w-full h-32 p-4 bg-surface border border-separator focus:border-accent focus:outline-none resize-none text-body text-text-primary placeholder-text-secondary transition-apple duration-apple rounded-xl"
                     disabled={isLoading}
+                    fullWidth
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        fontSize: '15px',
+                        lineHeight: '120%',
+                        letterSpacing: '-0.2px',
+                        '& textarea': {
+                          color: 'text.primary',
+                          '&::placeholder': {
+                            color: 'text.secondary',
+                            opacity: 1,
+                          },
+                        },
+                      },
+                    }}
                   />
                   {isLoading && (
-                    <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      <div className="flex items-center gap-3 text-text-primary">
-                        <div className="animate-spin h-5 w-5 border-2 border-action border-t-transparent rounded-full"></div>
-                        <span className="font-medium text-body">AI analyzing clinical data...</span>
-                      </div>
-                    </div>
+                    <Box sx={{ 
+                      position: 'absolute', 
+                      inset: 0, 
+                      bgcolor: 'background.paper', 
+                      opacity: 0.95,
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Box sx={{ position: 'relative', mb: 2 }}>
+                          <CircularProgress size={48} sx={{ color: 'primary.main' }} />
+                        </Box>
+                        <Typography sx={{ color: 'text.primary', fontWeight: 500 }}>
+                          AI analyzing clinical data...
+                        </Typography>
+                        <Box sx={{ mt: 1.5, display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                          <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%' }} />
+                          <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%' }} />
+                          <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%' }} />
+                        </Box>
+                      </Box>
+                    </Box>
                   )}
-                </div>
+                </Box>
                 
                 {/* Voice Recorder Button */}
-                <div className="flex-shrink-0 pt-2">
+                <Box sx={{ flexShrink: 0, pt: 1 }}>
                   <VoiceRecorder onTranscription={handleVoiceTranscription} />
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
             
             {/* Compact API Key Input */}
-            <div className="flex-shrink-0 pt-2">
+            <Box sx={{ flexShrink: 0, pt: 1 }}>
               <ApiKeyInput 
                 onApiKeySet={setApiKey} 
                 hasApiKey={!!apiKey}
                 compact={true}
               />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="flex gap-3 flex-wrap items-center">
-          <button
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Button
             type="submit"
+            variant="contained"
             disabled={isLoading || !localNote.trim() || !apiKey}
-            className="px-6 py-3 bg-diagnosis text-surface rounded-xl hover:bg-diagnosis/90 disabled:bg-text-secondary/50 disabled:cursor-not-allowed flex items-center gap-2 font-medium shadow-elevation hover:shadow-elevation-hover transform hover:-translate-y-0.5 transition-all duration-300"
+            startIcon={<Typography sx={{ fontSize: '1.125rem' }}>🧠</Typography>}
+            sx={{ 
+              px: 4, 
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 600
+            }}
           >
             {isLoading ? (
-              <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                <span className="text-body">Generating Workflow...</span>
-              </>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+                <span>Generating Workflow...</span>
+              </Box>
             ) : (
-              <>
-                <span className="text-base">🧠</span>
-                <span className="text-body">Generate AI Analysis</span>
-              </>
+              "Generate AI Analysis"
             )}
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="outlined"
             onClick={loadSampleNote}
             disabled={isLoading}
-            className="px-4 py-3 bg-surface text-text-primary rounded-xl shadow-subtle hover:shadow-elevation transform hover:-translate-y-0.5 disabled:bg-separator disabled:cursor-not-allowed font-medium transition-all duration-300"
+            startIcon={<Typography sx={{ fontSize: '1.125rem' }}>💼</Typography>}
+            sx={{ 
+              px: 3, 
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 500
+            }}
           >
-            <span className="text-body">💼 Load Sample Case</span>
-          </button>
+            Load Sample Case
+          </Button>
 
           {localNote && (
-            <button
-              type="button"
+            <Button
+              variant="outlined"
               onClick={() => setLocalNote('')}
               disabled={isLoading}
-              className="px-4 py-3 bg-surface text-text-secondary rounded-xl shadow-subtle hover:text-text-primary hover:shadow-elevation transform hover:-translate-y-0.5 disabled:bg-separator disabled:cursor-not-allowed font-medium transition-all duration-300"
+              startIcon={<Typography sx={{ fontSize: '1.125rem' }}>🗑️</Typography>}
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 500,
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'text.primary',
+                }
+              }}
             >
-              <span className="text-body">🗑️ Clear</span>
-            </button>
+              Clear
+            </Button>
           )}
-        </div>
+        </Box>
 
         {error && (
-          <div className="p-4 bg-surface rounded-xl shadow-elevation">
-            <div className="flex items-center gap-2">
-              <span className="text-action text-base">⚠️</span>
-              <p className="text-text-primary font-medium text-body">{error}</p>
-            </div>
-          </div>
+          <Alert 
+            severity="error" 
+            icon={<Typography sx={{ fontSize: '1.125rem' }}>⚠️</Typography>}
+            sx={{ 
+              p: 2.5,
+              bgcolor: 'error.main',
+              color: 'white',
+              '& .MuiAlert-icon': {
+                color: 'white',
+                fontSize: '2rem'
+              }
+            }}
+          >
+            <Typography sx={{ fontWeight: 500 }}>{error}</Typography>
+          </Alert>
         )}
 
-      </form>
-    </div>
+      </Box>
+    </Box>
   );
 }
