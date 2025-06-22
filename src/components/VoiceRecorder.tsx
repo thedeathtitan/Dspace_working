@@ -1,21 +1,30 @@
 import { useState, useRef } from 'react';
 import { Box, IconButton, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import { Mic, Stop } from '@mui/icons-material';
+import { useDiagStore } from '../store/diagStore';
 
 interface VoiceRecorderProps {
   onTranscription: (transcription: string) => void;
 }
 
 export function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
+  const { transcribeAudio, apiKey, setError } = useDiagStore();
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setLocalError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
   const startRecording = async () => {
     try {
+      setLocalError(null);
       setError(null);
+      
+      if (!apiKey.trim()) {
+        setLocalError('Please enter your OpenAI API key first');
+        return;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -26,7 +35,7 @@ export function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        await transcribeAudio();
+        await handleTranscription();
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
@@ -35,7 +44,9 @@ export function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (err) {
-      setError('Microphone access denied. Please allow microphone permissions.');
+      const errorMessage = 'Microphone access denied. Please allow microphone permissions.';
+      setLocalError(errorMessage);
+      setError(errorMessage);
       console.error('Error starting recording:', err);
     }
   };
@@ -47,21 +58,29 @@ export function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
     }
   };
 
-  const transcribeAudio = async () => {
+  const handleTranscription = async () => {
     setIsTranscribing(true);
+    setLocalError(null);
     setError(null);
 
     try {
-      // For demo purposes, we'll simulate transcription
-      // In a real app, you'd send this to OpenAI's Whisper API or similar
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      if (audioChunksRef.current.length === 0) {
+        throw new Error('No audio data recorded');
+      }
+
+      // Create audio blob from recorded chunks
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       
-      // Simulated transcription - replace with actual API call
-      const mockTranscription = "Patient presents with chest pain and shortness of breath. Vital signs are stable. No history of cardiac disease.";
+      // Use the real OpenAI Whisper API
+      const transcription = await transcribeAudio(audioBlob);
       
-      onTranscription(mockTranscription);
+      // Call the callback with the real transcription
+      onTranscription(transcription);
+      
     } catch (err) {
-      setError('Failed to transcribe audio. Please try again.');
+      const errorMessage = 'Failed to transcribe audio. Please try again.';
+      setLocalError(errorMessage);
+      setError(errorMessage);
       console.error('Transcription error:', err);
     } finally {
       setIsTranscribing(false);

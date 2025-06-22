@@ -1,4 +1,5 @@
-import type { DiagnosisNode, DiagnosisEdge } from '../types';
+import type { DiagnosisNode, DiagnosisEdge, ProblemListItem } from '../types';
+import { analyzeWithMCP } from './mcpClient';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -7,7 +8,7 @@ const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions';
 // Enhanced function calling schema for comprehensive medical reasoning
 const DIAGNOSIS_SCHEMA = {
   name: 'generate_comprehensive_diagnosis_workflow',
-  description: 'Analyze clinical note and generate diagnosis groups with likelihood-based sizing and next action nodes',
+  description: 'Analyze clinical note and generate diagnosis groups with likelihood-based sizing, next action nodes, and billable problem list',
   parameters: {
     type: 'object',
     properties: {
@@ -90,15 +91,45 @@ const DIAGNOSIS_SCHEMA = {
           },
           required: ['id', 'source', 'target', 'relationship', 'label']
         }
+      },
+      problem_list: {
+        type: 'array',
+        description: 'Billable problem list with ICD-10 codes for the most likely diagnoses',
+        minItems: 1,
+        maxItems: 10,
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Unique identifier for the problem list item' },
+            diagnosis: { type: 'string', description: 'Clinical diagnosis name' },
+            icd10Code: { type: 'string', description: 'Corresponding ICD-10 diagnosis code' },
+            likelihood: { type: 'number', minimum: 0.1, maximum: 1.0, description: 'Probability of this diagnosis' },
+            category: { type: 'string', description: 'Medical category (e.g., cardiac, pulmonary, infectious)' },
+            evidence: { 
+              type: 'array', 
+              items: { type: 'string' }, 
+              description: 'Key clinical findings supporting this diagnosis',
+              minItems: 1
+            },
+            status: { 
+              type: 'string', 
+              enum: ['active', 'resolved', 'ruled-out'], 
+              description: 'Current status of this problem',
+              default: 'active'
+            }
+          },
+          required: ['id', 'diagnosis', 'icd10Code', 'likelihood', 'category', 'evidence', 'status']
+        }
       }
     },
-    required: ['diagnosis_groups', 'next_actions', 'relationships']
+    required: ['diagnosis_groups', 'next_actions', 'relationships', 'problem_list']
   }
 };
 
 export interface OpenAIResponse {
   nodes: DiagnosisNode[];
   edges: DiagnosisEdge[];
+  problemList?: ProblemListItem[];
 }
 
 export async function analyzeWithOpenAI(clinicalNote: string, apiKey: string, retryCount = 0): Promise<OpenAIResponse> {
@@ -110,9 +141,69 @@ export async function analyzeWithOpenAI(clinicalNote: string, apiKey: string, re
     throw new Error('Clinical note cannot be empty');
   }
 
+  try {
+    // Use MCP client for bulletproof JSON handling
+    const mcpResponse = await analyzeWithMCP(clinicalNote, apiKey);
+    
+    // Transform MCP response to the expected format
+    const nodes: DiagnosisNode[] = mcpResponse.nodes.map((node, index) => ({
+      id: node.id,
+      position: { x: 100 + (index * 200), y: 100 + (index * 100) },
+      data: {
+        id: node.id,
+        label: node.label,
+        type: node.type,
+        likelihood: node.likelihood || 0.5,
+        confidence: node.confidence || 0.5,
+        evidence: node.evidence || [],
+        details: node.details || '',
+        category: node.category || 'general',
+        priority: (node.priority || 'medium') as 'urgent' | 'high' | 'medium' | 'low',
+        timing: node.timing || '',
+        related_diagnosis_id: node.related_diagnosis_id || ''
+      }
+    }));
+
+    const edges: DiagnosisEdge[] = mcpResponse.edges.map(edge => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      label: edge.label,
+      type: 'related'
+    }));
+
+    const problemList: ProblemListItem[] = mcpResponse.problemList.map(problem => ({
+      id: problem.id,
+      diagnosis: problem.diagnosis,
+      icd10Code: problem.icd10Code,
+      likelihood: problem.likelihood,
+      category: problem.category,
+      evidence: problem.evidence,
+      status: problem.status as 'active' | 'resolved' | 'ruled-out'
+    }));
+
+    return { nodes, edges, problemList };
+  } catch (error) {
+    console.error('MCP analysis failed, falling back to direct OpenAI call:', error);
+    
+    // Fallback to original implementation if MCP fails
+    return await analyzeWithOpenAIFallback(clinicalNote, apiKey, retryCount);
+  }
+}
+
+// Original implementation as fallback
+async function analyzeWithOpenAIFallback(clinicalNote: string, apiKey: string, retryCount = 0): Promise<OpenAIResponse> {
+  if (!apiKey) {
+    throw new Error('OpenAI API key is required');
+  }
+
+  if (!clinicalNote.trim()) {
+    throw new Error('Clinical note cannot be empty');
+  }
+
   const systemPrompt = `You are an expert emergency medicine physician and clinical decision support system with deep medical knowledge. 
 
-Your task is to analyze clinical presentations and create organized diagnosis groups with likelihood-based visualization and surrounding next action nodes.
+Your task is to analyze clinical presentations and create organized diagnosis groups with likelihood-based visualization, surrounding next action nodes, and a billable problem list.
 
 CRITICAL REQUIREMENTS:
 1. Create 2-4 diagnosis groups (e.g., "Cardiac", "Pulmonary", "Infectious", "Neurologic")
@@ -120,6 +211,7 @@ CRITICAL REQUIREMENTS:
 3. Generate 4-12 next action nodes that relate to specific diagnoses
 4. Likelihood scores determine node size in visualization (higher = larger circles)
 5. Next actions will be displayed as triangular nodes surrounding diagnoses
+6. Create a billable problem list with ICD-10 codes for the most likely diagnoses
 
 DIAGNOSIS GROUPS STRUCTURE:
 - Organize diagnoses by medical system or pathophysiology
@@ -132,11 +224,19 @@ NEXT ACTIONS APPROACH:
 - Link each action to a related diagnosis ID
 - Include diagnostic tests, treatments, monitoring, consultations
 - Vary priorities from urgent to low
-- Actions will surround their related diagnoses visually`;
+- Actions will surround their related diagnoses visually
+
+PROBLEM LIST REQUIREMENTS:
+- Include the 3-8 most likely diagnoses based on clinical presentation
+- Provide accurate ICD-10 diagnosis codes for each problem
+- Assign likelihood scores (0.1-1.0) based on clinical probability
+- Include key evidence supporting each diagnosis
+- Set status as 'active' for current problems
+- Focus on billable, actionable diagnoses`;
 
   const userPrompt = `Clinical Presentation: ${clinicalNote}
 
-Create organized diagnosis groups with likelihood-based sizing and surrounding next action nodes:
+Create organized diagnosis groups with likelihood-based sizing, surrounding next action nodes, and a billable problem list:
 
 1. DIAGNOSIS GROUPS (2-4 groups): Organize possible diagnoses by medical category
    - Each diagnosis needs a likelihood score (0.1-1.0) for visual sizing
@@ -149,7 +249,15 @@ Create organized diagnosis groups with likelihood-based sizing and surrounding n
 
 3. CLINICAL RELATIONSHIPS: Connect diagnoses to their relevant actions
 
-Think systematically about this patient's presentation. Group related diagnoses together and identify the key next steps for each diagnostic possibility.
+4. PROBLEM LIST (3-8 items): Billable problem list with ICD-10 codes
+   - Include the most likely diagnoses based on clinical presentation
+   - Provide accurate ICD-10 diagnosis codes for billing
+   - Assign likelihood scores based on clinical probability
+   - Include key evidence supporting each diagnosis
+   - Focus on actionable, billable diagnoses
+   - Where possible, include severe protein calorie malnutrition, frailty, and other chronic problems to maximize revenue
+
+Think systematically about this patient's presentation. Group related diagnoses together, identify key next steps, and create a comprehensive problem list for billing and documentation.
 
 VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions will be triangles surrounding them.`;
 
@@ -204,7 +312,7 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
       // Retry once if tool_calls is missing
       if (retryCount === 0) {
         console.log('Retrying OpenAI request due to missing tool_calls...');
-        return analyzeWithOpenAI(clinicalNote, apiKey, 1);
+        return analyzeWithOpenAIFallback(clinicalNote, apiKey, 1);
       }
       
       throw new Error('OpenAI returned no tool_calls - model may have responded in plain text');
@@ -231,7 +339,7 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
       // Retry once on format issues
       if (retryCount === 0) {
         console.log('Retrying OpenAI request due to bad format...');
-        return analyzeWithOpenAI(clinicalNote, apiKey, 1);
+        return analyzeWithOpenAIFallback(clinicalNote, apiKey, 1);
       }
       
       throw new Error('OpenAI returned incomplete response structure - missing diagnosis_groups');
@@ -316,8 +424,19 @@ VISUALIZATION NOTE: Diagnoses will be circles (size = likelihood), next actions 
       type: rel.relationship
     }));
 
-    console.log(`Generated ${nodes.length} nodes and ${edges.length} edges`);
-    return { nodes, edges };
+    // Extract problem list from response
+    const problemList: ProblemListItem[] = functionResponse.problem_list?.map((problem: any) => ({
+      id: problem.id,
+      diagnosis: problem.diagnosis,
+      icd10Code: problem.icd10Code,
+      likelihood: problem.likelihood,
+      category: problem.category,
+      evidence: problem.evidence,
+      status: problem.status || 'active'
+    })) || [];
+
+    console.log(`Generated ${nodes.length} nodes, ${edges.length} edges, and ${problemList.length} problem list items`);
+    return { nodes, edges, problemList };
 
   } catch (error) {
     if (error instanceof Error) {

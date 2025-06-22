@@ -18,10 +18,11 @@ import {
   DialogActions,
   IconButton
 } from '@mui/material';
-import { Settings } from '@mui/icons-material';
+import { Settings, MedicalServices } from '@mui/icons-material';
 import { useDiagStore } from '../store/diagStore';
 import type { DiagnosisNode, DiagnosisEdge } from '../types';
 import { getLayoutedElements, getSmartLayout } from '../utils/layout';
+import { ProblemList } from './ProblemList';
 
 interface SelectedInfo {
   id: string;
@@ -49,7 +50,7 @@ interface LayoutConfig {
 }
 
 export function GraphBoard() {
-  const { graph } = useDiagStore();
+  const { graph, problemList } = useDiagStore();
   const [elements, setElements] = useState<cytoscape.ElementDefinition[]>([]);
   const [selected, setSelected] = useState<SelectedInfo | null>(null);
   const [layoutType, setLayoutType] = useState<LayoutType>('force');
@@ -63,6 +64,7 @@ export function GraphBoard() {
   });
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
   const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
+  const [problemListOpen, setProblemListOpen] = useState(false);
 
   const testNodes: DiagnosisNode[] = [
     {
@@ -482,7 +484,7 @@ export function GraphBoard() {
         />
 
         {/* Layout Controls Button */}
-        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 1 }}>
           <IconButton
             onClick={() => setLayoutDialogOpen(true)}
             sx={{ 
@@ -497,6 +499,22 @@ export function GraphBoard() {
             }}
           >
             <Settings />
+          </IconButton>
+          
+          <IconButton
+            onClick={() => setProblemListOpen(true)}
+            sx={{ 
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+              boxShadow: 2,
+              '&:hover': {
+                bgcolor: 'background.default',
+                boxShadow: 3,
+              }
+            }}
+          >
+            <MedicalServices />
           </IconButton>
         </Box>
 
@@ -846,6 +864,13 @@ export function GraphBoard() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Problem List Dialog */}
+      <ProblemList
+        open={problemListOpen}
+        onClose={() => setProblemListOpen(false)}
+        problemList={problemList}
+      />
     </Box>
   );
 }

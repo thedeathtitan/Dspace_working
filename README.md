@@ -2,14 +2,14 @@
 
 ## Clinical Reasoning Intelligence Platform
 
-A sophisticated web application that integrates OpenAI's advanced reasoning capabilities with interactive network visualization to create comprehensive medical diagnostic workflows. It now features a professional dark-mode theme, voice-to-text dictation, and advanced graph layout controls.
+A sophisticated web application that integrates OpenAI's advanced reasoning capabilities with interactive network visualization to create comprehensive medical diagnostic workflows. It now features a professional dark-mode theme, voice-to-text dictation, advanced graph layout controls, and a billable problem list with ICD-10 codes.
 
 ![New Dark UI](https://firebasestorage.googleapis.com/v0/b/project-assets-253613.appspot.com/o/github_assets%2FDspace_darkmode.png?alt=media&token=e8869c58-39a1-4643-9844-3c87a9c0490f)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19.1-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)
-![Version](https://img.shields.io/badge/version-1.1.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-green.svg)
 
 ## 🚀 Features
 
@@ -22,18 +22,22 @@ A sophisticated web application that integrates OpenAI's advanced reasoning capa
 - **Emergency Medicine Focus**: Prompts optimized for emergency department workflows
 - **Evidence-Based Reasoning**: Supporting clinical findings for each diagnostic suggestion
 - **Confidence Scoring**: Quantified certainty levels for medical decision support
+- **Billable Problem List**: Automatic generation of ICD-10 codes for billing and documentation
 
 ### 🎨 Professional Healthcare Interface
-- **Professional Dark Theme**: A complete UI overhaul featuring a modern, high-contrast dark mode inspired by IDEs like Cursor.
+- **Material-UI Design System**: Complete migration to MUI v6 for consistent, professional components
+- **Professional Dark Theme**: A complete UI overhaul featuring a modern, high-contrast dark mode
 - **Medical-Grade UI**: Interface components designed for healthcare workflows
 - **Responsive Layout**: Seamless experience across desktop, tablet, and mobile devices
 - **Accessibility**: WCAG-compliant design with keyboard navigation support
 
 ### 📊 Interactive Network Visualization
 - **Node-Based Workflow**: Medical concepts represented as interactive network nodes
+- **Proportional Node Sizing**: Nodes sized based on diagnosis probability for better visual hierarchy
 - **Expandable Details**: Click nodes to reveal comprehensive diagnostic information
 - **Color-Coded Priority**: Visual hierarchy indicating clinical urgency levels
-- **Advanced Dynamic Layouts**: Choose from multiple layout algorithms (Force-Directed, Hierarchical, etc.) and fine-tune them with real-time controls.
+- **Advanced Dynamic Layouts**: Choose from multiple layout algorithms with real-time controls
+- **Problem List Integration**: Access billable problem list directly from graph interface
 
 ### 🔒 Privacy & Security
 - **Local Processing**: API keys stored securely in browser only
@@ -43,7 +47,7 @@ A sophisticated web application that integrates OpenAI's advanced reasoning capa
 ## 🛠 Tech Stack
 
 - **Frontend**: React 19.1 + TypeScript 5.8 + Vite 6.3
-- **Styling**: Tailwind CSS 4.1 with custom design system
+- **UI Framework**: Material-UI (MUI v6) with custom dark theme
 - **Visualization**: Cytoscape.js 3.32 for interactive network diagrams
 - **State Management**: Zustand 5.0 with localStorage persistence
 - **AI Integration**: OpenAI API with structured JSON responses
@@ -85,10 +89,12 @@ Navigate to `http://localhost:5173` in your browser
 
 ### Basic Workflow
 1. **Enter API Key**: Configure your OpenAI credentials
-2. **Input Clinical Note**: Describe patient presentation, history, and findings
+2. **Input Clinical Note**: Describe patient presentation, history, and findings (or use voice dictation)
 3. **Generate Analysis**: Click "Generate AI Analysis" to create workflow
 4. **Explore Results**: Click nodes to expand detailed information
 5. **Navigate Diagram**: Use zoom, pan, and fit-to-view controls
+6. **Access Problem List**: Click the medical icon button to view billable problem list with ICD-10 codes
+7. **Customize Layout**: Use the settings icon to adjust graph layout and positioning
 
 ### Sample Clinical Note
 ```
@@ -115,6 +121,7 @@ src/
 │   ├── GraphBoard.tsx    # Cytoscape visualization component
 │   ├── Legend.tsx        # Interface legend and controls
 │   ├── NoteInput.tsx     # Clinical note input form
+│   ├── ProblemList.tsx   # Billable problem list dialog
 │   └── VoiceRecorder.tsx # Voice dictation component
 ├── store/               # State management
 │   └── diagStore.ts     # Zustand store with localStorage persistence
@@ -123,6 +130,7 @@ src/
 ├── utils/               # Utility functions
 │   ├── openai.ts        # OpenAI API integration
 │   └── layout.ts        # Graph layout algorithms
+├── theme.ts             # Material-UI theme configuration
 └── App.tsx              # Main application component
 ```
 
@@ -235,3 +243,25 @@ Diagnosis-Space AI represents the future of clinical decision support, combining
 **⚠️ Research & Education Only - Not for Clinical Use**
 
 Built with ❤️ for the healthcare community
+
+## MCP Integration
+
+The app uses a custom MCP (Model Context Protocol) client that provides:
+
+### **Bulletproof JSON Handling**
+1. **Direct JSON Response**: Primary strategy for clean JSON
+2. **Markdown Extraction**: Fallback for JSON wrapped in code blocks
+3. **Pattern Matching**: Extract JSON-like structures from text
+4. **Minimal Valid Structure**: Final fallback with emergency assessment
+
+### **Medical Knowledge Base**
+- Emergency medicine principles (ABCDE approach)
+- Common presentations by system (Cardiac, Respiratory, Neurologic, etc.)
+- ICD-10 code database
+- Diagnostic and treatment algorithms
+
+### **Fallback Strategy**
+- MCP client attempts structured analysis first
+- Falls back to direct OpenAI calls if MCP fails
+- Multiple retry attempts with exponential backoff
+- Comprehensive error handling and logging

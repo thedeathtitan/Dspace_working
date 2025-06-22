@@ -33,9 +33,20 @@ export interface DiagnosisEdge {
   type?: 'next-step' | 'supports' | 'excludes' | 'related';
 }
 
+export interface ProblemListItem {
+  id: string;
+  diagnosis: string;
+  icd10Code: string;
+  likelihood: number;
+  category: string;
+  evidence: string[];
+  status: 'active' | 'resolved' | 'ruled-out';
+}
+
 export interface AnalysisResponse {
   nodes: DiagnosisNode[];
   edges: DiagnosisEdge[];
+  problemList?: ProblemListItem[];
   metadata?: {
     processing_time?: number;
     confidence?: number;
@@ -49,6 +60,7 @@ export interface DiagnosisState {
     nodes: DiagnosisNode[];
     edges: DiagnosisEdge[];
   };
+  problemList: ProblemListItem[];
   isLoading: boolean;
   error: string | null;
   apiKey: string;
@@ -56,6 +68,7 @@ export interface DiagnosisState {
   isTranscribing: boolean;
   setNote: (note: string) => void;
   setGraph: (graph: { nodes: DiagnosisNode[]; edges: DiagnosisEdge[] }) => void;
+  setProblemList: (problemList: ProblemListItem[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setApiKey: (apiKey: string) => void;

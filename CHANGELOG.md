@@ -5,6 +5,33 @@ All notable changes to the Diagnosis-Space AI platform will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-27
+
+### 🚀 Added
+- **Problem List Feature** - New billable problem list with ICD-10 codes generated from clinical analysis
+- **Problem List UI** - Accessible button in graph interface that opens a comprehensive problem list dialog
+- **ICD-10 Code Integration** - Automatic generation of accurate ICD-10 diagnosis codes for billing
+- **Enhanced OpenAI Schema** - Updated JSON schema to include problem list generation with likelihood scores and clinical evidence
+
+### 🎨 Design
+- **Material-UI Migration** - Complete migration from Tailwind CSS to Material-UI (MUI v6) for consistent design system
+- **Global Dark Theme** - Custom MUI theme reflecting original dark color palette and typography
+- **Improved Node Sizing** - Nodes now sized proportionally to diagnosis probability for better visual hierarchy
+- **Enhanced Text Contrast** - Brighter, more readable text in node details panel against dark background
+- **Streamlined Layout Controls** - Moved layout controls into popup dialog triggered by settings icon to reduce clutter
+
+### 🛠 Technical
+- **MUI Component System** - Replaced all Tailwind classes with MUI components (Box, Typography, Paper, Buttons, Dialogs, etc.)
+- **Theme Provider Integration** - Wrapped app with MUI's ThemeProvider and CssBaseline for consistent theming
+- **TypeScript Improvements** - Added ProblemListItem interface and updated type definitions
+- **Store Enhancements** - Added problem list state management to Zustand store
+- **Build Optimization** - Removed Tailwind dependencies and configuration files
+
+### 🧪 Testing & Quality
+- **Successful Migration** - Verified all components work correctly with MUI
+- **Build Verification** - Confirmed clean builds with new dependency structure
+- **Type Safety** - Maintained TypeScript strict mode compliance
+
 ## [1.1.0] - 2025-06-21
 
 ### 🚀 Added
@@ -155,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Clinical decision support rules engine
 - [ ] Multi-language interface support
 - [ ] Mobile application development
+- [ ] MCP erver integration 
 
 ### Version 2.0.0 (Future)
 - [ ] Healthcare system API integration
@@ -190,3 +218,42 @@ For questions, issues, or feature requests:
 **🏥 Purpose: Clinical reasoning education and research**
 
 **⚠️ Research & Education Only - Not for Clinical Use**
+
+## [Unreleased]
+
+### Added
+- **MCP Integration**: Implemented custom MCP (Model Context Protocol) client for bulletproof JSON handling
+- **Bulletproof JSON Strategies**: Multiple fallback strategies for parsing OpenAI responses
+  - Direct JSON response parsing
+  - Markdown code block extraction
+  - JSON-like structure pattern matching
+  - Minimal valid structure fallback
+- **Medical Knowledge Base**: Comprehensive medical knowledge integration
+  - Emergency medicine principles (ABCDE approach)
+  - Common presentations by system (Cardiac, Respiratory, Neurologic, etc.)
+  - ICD-10 code database with common codes
+  - Diagnostic and treatment algorithms
+- **Enhanced Error Handling**: Improved error recovery and logging
+- **Zod Schema Validation**: Type-safe JSON validation for all responses
+
+### Changed
+- **OpenAI Integration**: Modified to use MCP client with fallback to direct calls
+- **Response Processing**: More robust JSON parsing with multiple strategies
+- **Type Safety**: Enhanced TypeScript types for better development experience
+
+### Technical
+- Added `mcpClient.ts` with comprehensive medical analysis logic
+- Updated `openai.ts` to integrate MCP client with fallback strategy
+- Added Zod dependency for schema validation
+- Enhanced error handling and logging throughout the application
+
+## [Previous Versions]
+
+### [v1.0.0] - Initial Release
+- Basic React + Vite setup
+- OpenAI integration
+- Cytoscape graph visualization
+- Voice transcription
+- Problem list feature
+- Material-UI migration
+- Dark mode theme

@@ -1,9 +1,9 @@
 # Diagnosis-Space Implementation Plan
 
 ## Project Overview
-A Cytoscape.js-based application for visualizing medical diagnosis workflows, converting free-text or voice-dictated clinical notes into interactive network graphs with diagnoses, differential diagnoses, and suggested actions.
+A Cytoscape.js-based application for visualizing medical diagnosis workflows, converting free-text or voice-dictated clinical notes into interactive network graphs with diagnoses, differential diagnoses, and suggested actions. Now includes billable problem list generation with ICD-10 codes.
 
-**Status**: ✅ **COMPLETED** - Version 1.1.0 Released
+**Status**: ✅ **COMPLETED** - Version 1.2.0 Released
 
 ## Architecture Components
 
@@ -13,13 +13,14 @@ A Cytoscape.js-based application for visualizing medical diagnosis workflows, co
 - **Cytoscape.js 3.32**: Network visualization library
 - **react-cytoscapejs**: React wrapper for Cytoscape integration
 - **Zustand 5.0**: Lightweight state management with persistence
-- **Tailwind CSS 4.1 + clsx**: Utility-first styling framework
-- **Axios 1.9**: HTTP client for OpenAI API calls
+- **Material-UI (MUI v6)**: Component library with custom dark theme
+- **@emotion/react**: CSS-in-JS styling for MUI components
 
 ### 2. API Integration ✅ IMPLEMENTED
 - **OpenAI API**: Direct frontend integration with latest models
 - **Local Storage**: Secure API key management
 - **No Backend Required**: Frontend-only architecture for simplicity
+- **Problem List Generation**: Enhanced JSON schema for billable diagnoses with ICD-10 codes
 
 ## Component Architecture
 
@@ -33,7 +34,9 @@ A Cytoscape.js-based application for visualizing medical diagnosis workflows, co
  │   ├── <Legend />       // Node type reference and controls
  │   └── <VoiceRecorder />// Voice input for clinical notes
  ├── <NoteInput />        // Text input for clinical notes
- └── <GraphBoard />       // Cytoscape network visualization
+ ├── <GraphBoard />       // Cytoscape network visualization
+ │   └── <ProblemList />  // Billable problem list dialog
+ └── <ThemeProvider />    // Material-UI theme configuration
 ```
 
 #### State Management (Zustand) ✅ IMPLEMENTED
@@ -42,10 +45,12 @@ interface DiagStore {
   note: string;
   apiKey: string;
   nodes: CytoscapeNode[];
+  problemList: ProblemListItem[];
   isLoading: boolean;
   setNote: (note: string) => void;
   setApiKey: (key: string) => void;
   setNodes: (nodes: CytoscapeNode[]) => void;
+  setProblemList: (problemList: ProblemListItem[]) => void;
   setLoading: (loading: boolean) => void;
 }
 ```
@@ -89,6 +94,22 @@ interface DiagStore {
 - [x] Implement fully responsive design
 - [x] Manual testing across browsers and devices
 - [x] Production-ready build and deployment
+
+### Phase 6: Material-UI Migration ✅ COMPLETED
+- [x] Complete migration from Tailwind CSS to Material-UI (MUI v6)
+- [x] Custom dark theme configuration reflecting original color palette
+- [x] Updated all components to use MUI components and styling
+- [x] Improved node sizing based on diagnosis probability
+- [x] Enhanced text contrast in node details panel
+- [x] Streamlined layout controls in popup dialog
+
+### Phase 7: Problem List Feature ✅ COMPLETED
+- [x] Enhanced OpenAI JSON schema to include problem list generation
+- [x] Added ProblemListItem interface and type definitions
+- [x] Created ProblemList component with comprehensive dialog UI
+- [x] Integrated problem list button in GraphBoard interface
+- [x] Updated store to include problem list state management
+- [x] Added ICD-10 code generation for billable diagnoses
 
 ## Data Flow
 
@@ -180,7 +201,8 @@ diagnosis-space/
 │   │   ├── GraphBoard.tsx       # Cytoscape network visualization
 │   │   ├── Legend.tsx           # Node type legend and controls
 │   │   ├── NoteInput.tsx        # Clinical note input form
-│   │   └── VoiceRecorder.tsx  # Voice input component
+│   │   ├── ProblemList.tsx      # Billable problem list dialog
+│   │   └── VoiceRecorder.tsx    # Voice input component
 │   ├── store/
 │   │   └── diagStore.ts         # Zustand state management
 │   ├── utils/
@@ -188,6 +210,7 @@ diagnosis-space/
 │   │   └── openai.ts            # OpenAI API integration
 │   ├── types/
 │   │   └── index.ts             # TypeScript type definitions
+│   ├── theme.ts                 # Material-UI theme configuration
 │   ├── App.tsx                  # Main application component
 │   ├── index.css                # Global styles
 │   └── main.tsx                 # Application entry point

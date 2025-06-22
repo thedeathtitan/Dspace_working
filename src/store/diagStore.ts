@@ -8,6 +8,7 @@ export const useDiagStore = create<DiagnosisState>()(
     (set, get) => ({
       note: '',
       graph: { nodes: [], edges: [] },
+      problemList: [],
       isLoading: false,
       error: null,
       apiKey: '',
@@ -17,6 +18,8 @@ export const useDiagStore = create<DiagnosisState>()(
       setNote: (note: string) => set({ note }),
       
       setGraph: (graph) => set({ graph }),
+      
+      setProblemList: (problemList) => set({ problemList }),
       
       setLoading: (loading: boolean) => set({ isLoading: loading }),
       
@@ -29,7 +32,7 @@ export const useDiagStore = create<DiagnosisState>()(
       setTranscribing: (transcribing: boolean) => set({ isTranscribing: transcribing }),
       
       analyzeNote: async (note: string) => {
-        const { setLoading, setError, setGraph, apiKey } = get();
+        const { setLoading, setError, setGraph, setProblemList, apiKey } = get();
         
         if (!note.trim()) {
           setError('Please enter a clinical note to analyze');
@@ -48,6 +51,11 @@ export const useDiagStore = create<DiagnosisState>()(
           // Use real OpenAI API
           const result = await analyzeWithOpenAI(note, apiKey);
           setGraph(result);
+          
+          // Set problem list if available
+          if (result.problemList) {
+            setProblemList(result.problemList);
+          }
           
         } catch (error) {
           console.error('Analysis error:', error);
